@@ -53,6 +53,8 @@ int main(int argc, char* argv[]) {
                 std::cout << "Resized: " << newWidth << "x" << newHeight << std::endl;
                 width = newWidth;
                 height = newHeight;
+                surface = SDL_GetWindowSurface(window);
+
             }
         }
 
