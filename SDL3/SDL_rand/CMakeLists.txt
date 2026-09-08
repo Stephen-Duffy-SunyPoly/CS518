@@ -8,9 +8,10 @@ include(FetchContent)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
-find_package(SDL3 3.4.14 QUIET)
+find_package(SDL3 QUIET)
 
-if(NOT SDL3_found)
+if(NOT SDL3_FOUND)
+    message("SDL3 not found installed on the system, downloading...")
     set(SDL_TESTS OFF CACHE BOOL "Disable SDL test suite" FORCE)
     # screw all that complicated install and command line args stuf, this is way easier
     fetchcontent_declare(
