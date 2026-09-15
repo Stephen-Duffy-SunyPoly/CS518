@@ -26,3 +26,6 @@ else()
 endif()
 
 target_link_libraries(p1_duffysd PRIVATE SDL3::SDL3)
+
+add_executable(spline spline.cpp)
+target_link_libraries(spline PRIVATE SDL3::SDL3)

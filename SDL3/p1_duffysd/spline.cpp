@@ -18,22 +18,25 @@ static Color randomColor() {
     };
 }
 
-static void stepColor(Color& color) {
-    const int channel  = SDL_rand(3);
-    const int amount   = SDL_rand(2) *2 -1;
-    switch (channel) {
-        case 0:
-            color.r = static_cast<Uint8>(SDL_clamp(color.r+amount, 0, 255));
-            break;
-        case 1:
-            color.g = static_cast<Uint8>(SDL_clamp(color.g+amount, 0, 255));
-            break;
-        case 2:
-            color.b = static_cast<Uint8>(SDL_clamp(color.b+amount, 0, 255));
-            break;
-        default:
-            break;
-    }
+static Uint8 lerp(const Uint8 a, const Uint8 b, const double t) {
+    return static_cast<Uint8>(
+        (1 - t) * static_cast<double>(a) +
+        t * static_cast<double>(b)
+    );
+}
+
+static Color lerpColor(const Color a, const Color b, const double t) {
+    return {
+        lerp(a.r, b.r, t),
+        lerp(a.g, b.g, t),
+        lerp(a.b, b.b, t),
+    };
+}
+
+static Color curveColor(const Color base, const Color support, const Color target, const double t) {
+    Color first = lerpColor(base, support, t);
+    Color second = lerpColor(support, target, t);
+    return lerpColor(first, second, t);
 }
 
 int main(int argc, char* argv[]) {
@@ -61,17 +64,30 @@ int main(int argc, char* argv[]) {
     }
 
     // my program initialization things
-    Color fill = randomColor();
 
+    double slideProgress = 0;
+    Color base = randomColor();
+    Color support = randomColor();
+    Color target = randomColor();
+    // my program initialization things
     SDL_Event e;
-    constexpr SDL_Rect drawRect {
+    SDL_Rect drawRect {
         0, 0, WIDTH, HEIGHT
     };
-    //render loop
     while(SDL_PollEvent(&e) == false || e.type != SDL_EVENT_QUIT) {
-        stepColor(fill);
+        Color frameColor = curveColor(base, support, target, slideProgress);
 
-        SDL_FillSurfaceRect(surface, &drawRect,SDL_MapSurfaceRGB(surface, fill.r, fill.g, fill.b));
+        SDL_FillSurfaceRect(surface, &drawRect,SDL_MapSurfaceRGB(surface, frameColor.r, frameColor.g, frameColor.b));
+
+        slideProgress += 0.00001;
+        //if we have reached the target color
+        if (slideProgress >= 1) {
+            slideProgress = 0;
+            base = target;
+            //pick a new color
+            support = randomColor();
+            target = randomColor();
+        }
 
         SDL_UpdateWindowSurface(window);
     }
