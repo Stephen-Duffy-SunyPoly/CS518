@@ -8,7 +8,7 @@ include(FetchContent)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
-find_package(SDL3 QUIET)
+find_package(SDL3 CONFIG QUIET)
 
 if(NOT SDL3_FOUND)
     message("SDL3 not found installed on the system, downloading...")
@@ -24,6 +24,7 @@ if(NOT SDL3_FOUND)
 endif ()
 
 add_executable(SDL_rand main.cpp)
+add_executable(bounce bounce.cpp)
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC, catching most bugs without noise.

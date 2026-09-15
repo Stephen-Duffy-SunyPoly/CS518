@@ -45,22 +45,46 @@ int main(int argc, char* argv[]) {
         SDL_Event event;
         //read all events
         while (SDL_PollEvent(&event)) {
-
             //handle the event
-            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED || event.type == SDL_EVENT_QUIT) {
-                shouldRun = false;
-            } else if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-                const int newWidth = event.window.data1;
-                const int newHeight = event.window.data2;
-                std::cout << "Resized: " << newWidth << "x" << newHeight << std::endl;
-                width = newWidth;
-                height = newHeight;
-                surface = SDL_GetWindowSurface(window);
-
+            int newWidth;
+            int newHeight;
+            switch (event.type) {
+                case SDL_EVENT_QUIT:
+                case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                    shouldRun = false;
+                    break;
+                case SDL_EVENT_WINDOW_RESIZED:
+                    newWidth = event.window.data1;
+                    newHeight = event.window.data2;
+                    std::cout << "Resized: " << newWidth << "x" << newHeight << std::endl;
+                    width = newWidth;
+                    height = newHeight;
+                    surface = SDL_GetWindowSurface(window);
+                    break;
+                case SDL_EVENT_KEY_DOWN:
+                    if (event.key.key == SDLK_ESCAPE) {
+                        shouldRun = false;
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
         //do other render stuff
+        auto * pixels = static_cast<Uint32*>(surface->pixels);
+        for (int y=0;y<height;y++) {
+            for (int x =0;x<width;x++){
+                if (y == height -1 && x == width - 1) {
+                    break;
+                }
+                if (y == 0 && x == 0) {
+                    break;
+                }
+                int i = x+y*width;
+                pixels[i] =static_cast<Uint32>(pixels[i] * 0.5 + 0.5 * pixels[i+(SDL_rand(2)*2-1)]);
+            }
+        }
 
         SDL_UpdateWindowSurface(window);
     }
