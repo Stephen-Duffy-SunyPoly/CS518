@@ -1,38 +1,43 @@
 #include <iostream>
-#include <ctime>
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
 int main(int argc, char* argv[]) {
-    uint32_t seed;
-    seed = time(nullptr) ^ reinterpret_cast<intptr_t>(&seed) ^ reinterpret_cast<intptr_t>(&seed) >> 16;
-    srand(seed);
+
+    if (argc < 2) {
+        std::cerr << "Please provide a bit map image!" << std::endl;
+        return EXIT_FAILURE;
+    }
 
     if (!SDL_Init(initFLags)) {
         std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
         return EXIT_FAILURE;
     }
-    std::cout << "Hello World!" << std::endl;
 
-    int width = 1280;
-    int height = 720;
+    SDL_Surface * image;
+    (image = SDL_LoadBMP(argv[1])) || (image = SDL_LoadPNG(argv[1]));
+    if (image == nullptr) {
+        std::cerr << "Failed to load image: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
 
-    SDL_Window * window = SDL_CreateWindow("Basic SDL Window",width,height,SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT);
+    int width = image->w;
+    int height = image->h;
+
+    SDL_Window * window = SDL_CreateWindow("SDL Image Window",width,height,SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT);
     if (window == nullptr) {
         std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
+        SDL_DestroySurface(image);
+        SDL_Quit();
         return EXIT_FAILURE;
     }
 
     SDL_Surface * surface = SDL_GetWindowSurface(window);
 
-    std::string pixelFormat = SDL_GetPixelFormatName(surface->format);
-    if (pixelFormat != "SDL_PIXELFORMAT_ARGB8888") {
-        std::cerr << "Alert! Non standard pixel format! " << pixelFormat << std::endl;
-    }
-
-
+    //blit stands for BLock Transfer
+    SDL_BlitSurface(image, nullptr, surface, nullptr);
 
     bool shouldRun = true;
     while (shouldRun) {
@@ -71,6 +76,7 @@ int main(int argc, char* argv[]) {
         SDL_UpdateWindowSurface(window);
     }
 
+    SDL_DestroySurface(image);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return EXIT_SUCCESS;
