@@ -1,10 +1,10 @@
 #include <iostream>
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
+// #include <SDL3/SDL_main.h>
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
-int main(int argc, char* argv[]) {
+int main() {
     Uint64 seed;
     seed = reinterpret_cast<Uint64>(&seed);
 
@@ -34,11 +34,13 @@ int main(int argc, char* argv[]) {
 
     for (int y=0;y<height;y++) {
         for (int x =0;x<width;x++){
+            Uint8 c = static_cast<Uint8>(SDL_rand(256));
             //transparency does not work like i would expect, 0 alpha is not 100% transparent unless all other color channels are off
-            static_cast<Uint32*>(surface->pixels)[x+y*width] = SDL_rand_bits();// | 0xFF000000;
+            static_cast<Uint32*>(surface->pixels)[x+y*width] = SDL_MapSurfaceRGBA(surface, c,c,c,static_cast<Uint8>(SDL_rand(256)));// | 0xFF000000;
         }
     }
 
+    auto pfmd = SDL_GetPixelFormatDetails(surface->format);
 
     bool shouldRun = true;
     while (shouldRun) {
@@ -71,18 +73,22 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        float mouseX, mouseY;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        double t = (mouseX+mouseY) / static_cast<double>(width+height);
+
         //do other render stuff
-        auto * pixels = static_cast<Uint32*>(surface->pixels);
+        auto* pixels = static_cast<Uint32*>(surface->pixels);
         for (int y=0;y<height;y++) {
             for (int x =0;x<width;x++){
-                if (y == height -1 && x == width - 1) {
-                    break;
-                }
-                if (y == 0 && x == 0) {
-                    break;
-                }
                 int i = x+y*width;
-                pixels[i] =static_cast<Uint32>(pixels[i] * 0.5 + 0.5 * pixels[i+(SDL_rand(2)*2-1)]);
+                Uint8 c;
+                Uint8 a;
+                SDL_GetRGBA(pixels[i],pfmd, nullptr,&c, nullptr,nullptr,&a);
+
+                auto c2 = static_cast<Uint8>(SDL_rand(256));
+                c = static_cast<Uint8>(SDL_round(t * c + (1.0 - t) * c2));
+                pixels[i] = SDL_MapSurfaceRGBA(surface, c,c,c,a);// | 0xFF000000;
             }
         }
 
