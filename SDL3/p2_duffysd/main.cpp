@@ -62,6 +62,12 @@ struct Pos {
     }
 };
 
+// basically just a 3 byte data type
+struct Bit24Color {
+    // ReSharper disable once CppDeclaratorNeverUsed
+    Uint8 b1,b2,b3;
+};
+
 static int imap(const SDL_Surface * s, const int x, const int y) {
     return x+y*s->w;
 }
@@ -76,6 +82,26 @@ static void shuffleOrder(Pos *order, int size) {
         Pos tmp = order[i];
         order[i] = order[a];
         order[a] = tmp;
+    }
+}
+
+template <typename T>
+void pixleDust(SDL_Surface *image, int numberOfPixels, Pos *workOrder) {
+    auto pixels = static_cast<T *>(image->pixels);
+    //randomize the order
+    for (int i=0;i<numberOfPixels;i++) {
+        Pos pos = workOrder[i];
+        //choose a random direction to swap in
+        auto direction = static_cast<Direction>(SDL_rand(8));
+        while (!pos.directionValid(image,direction)) {
+            direction = static_cast<Direction>(SDL_rand(8));
+        }
+        Pos other = pos + direction;
+
+        //swap them
+        T tmp = pixels[imap(image,pos)];
+        pixels[imap(image,pos)] = pixels[imap(image,other)];
+        pixels[imap(image,other)] = tmp;
     }
 }
 
@@ -138,6 +164,12 @@ int main(int argc, char* argv[]) {
     bool snappening = false;
     int numberSaves = 0;
     char saveNameBuffer[128];
+    const SDL_PixelFormatDetails *imageDetails = SDL_GetPixelFormatDetails(image->format);
+    int bpp = imageDetails->bits_per_pixel;
+    if (bpp != 32 && bpp != 24) {
+        SDL_Log("Image Color format has unsupported nuber of bits per color");
+    }
+
     //render loop
     while(!quit) {
         while (SDL_PollEvent(&e)) {
@@ -165,22 +197,11 @@ int main(int argc, char* argv[]) {
         }
 
         if (snappening) {
-            auto pixels = static_cast<Uint32 *>(image->pixels);
-            //randomize the order
             shuffleOrder(workOrder, numberOfPixels);
-            for (int i=0;i<numberOfPixels;i++) {
-                Pos pos = workOrder[i];
-                //choose a random direction to swap in
-                auto direction = static_cast<Direction>(SDL_rand(8));
-                while (!pos.directionValid(image,direction)) {
-                    direction = static_cast<Direction>(SDL_rand(8));
-                }
-                Pos other = pos + direction;
-
-                //swap them
-                Uint32 tmp = pixels[imap(image,pos)];
-                pixels[imap(image,pos)] = pixels[imap(image,other)];
-                pixels[imap(image,other)] = tmp;
+            if (bpp == 32) {
+                pixleDust<Uint32>(image, numberOfPixels, workOrder);
+            } else if (bpp == 24) {
+                pixleDust<Bit24Color>(image, numberOfPixels, workOrder);
             }
             SDL_BlitSurface(image,nullptr,surface,nullptr);
         }
