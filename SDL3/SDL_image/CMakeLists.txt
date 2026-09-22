@@ -4,6 +4,7 @@ project(SDL_image)
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(SDL3 CONFIG QUIET)
+find_package(SDL3_image CONFIG REQUIRED)
 
 if(NOT SDL3_FOUND)
     include(FetchContent)
@@ -19,7 +20,6 @@ if(NOT SDL3_FOUND)
     fetchcontent_makeavailable(SDL3)
 endif ()
 
-find_package(SDL3_image CONFIG REQUIRED)
 
 add_executable(SDL_image main.cpp)
 
