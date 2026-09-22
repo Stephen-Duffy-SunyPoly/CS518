@@ -1,5 +1,6 @@
 #include <iostream>
 #include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
@@ -15,8 +16,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    SDL_Surface * image;
-    (image = SDL_LoadBMP(argv[1])) || (image = SDL_LoadPNG(argv[1]));
+    SDL_Surface * image = IMG_Load(argv[1]);
     if (image == nullptr) {
         std::cerr << "Failed to load image: " << SDL_GetError() << std::endl;
         SDL_Quit();

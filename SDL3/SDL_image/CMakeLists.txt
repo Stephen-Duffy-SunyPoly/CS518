@@ -19,8 +19,7 @@ if(NOT SDL3_FOUND)
     fetchcontent_makeavailable(SDL3)
 endif ()
 
-
-fetchcontent_makeavailable(SDL3)
+find_package(SDL3_image CONFIG REQUIRED)
 
 add_executable(SDL_image main.cpp)
 
@@ -32,4 +31,4 @@ else()
     target_compile_options(SDL_image PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-target_link_libraries(SDL_image PRIVATE SDL3::SDL3)
+target_link_libraries(SDL_image PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
