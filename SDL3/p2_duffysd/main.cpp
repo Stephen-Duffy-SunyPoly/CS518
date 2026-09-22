@@ -62,12 +62,6 @@ struct Pos {
     }
 };
 
-// basically just a 3 byte data type
-struct Bit24Color {
-    // ReSharper disable once CppDeclaratorNeverUsed
-    Uint8 b1,b2,b3;
-};
-
 static int imap(const SDL_Surface * s, const int x, const int y) {
     return x+y*s->w;
 }
@@ -144,6 +138,9 @@ int main(int argc, char* argv[]) {
         SDL_Quit();
         return 1;
     }
+    SDL_Surface * fixedImage = SDL_ConvertSurface(image,surface->format);
+    SDL_DestroySurface(image);
+    image = fixedImage;
 
     // my program initialization things
     //this will hold the order pixels are swapped in
@@ -164,11 +161,6 @@ int main(int argc, char* argv[]) {
     bool snappening = false;
     int numberSaves = 0;
     char saveNameBuffer[128];
-    const SDL_PixelFormatDetails *imageDetails = SDL_GetPixelFormatDetails(image->format);
-    int bpp = imageDetails->bits_per_pixel;
-    if (bpp != 32 && bpp != 24) {
-        SDL_Log("Image Color format has unsupported nuber of bits per color");
-    }
 
     //render loop
     while(!quit) {
@@ -198,11 +190,8 @@ int main(int argc, char* argv[]) {
 
         if (snappening) {
             shuffleOrder(workOrder, numberOfPixels);
-            if (bpp == 32) {
-                pixleDust<Uint32>(image, numberOfPixels, workOrder);
-            } else if (bpp == 24) {
-                pixleDust<Bit24Color>(image, numberOfPixels, workOrder);
-            }
+            pixleDust<Uint32>(image, numberOfPixels, workOrder);
+
             SDL_BlitSurface(image,nullptr,surface,nullptr);
         }
         SDL_UpdateWindowSurface(window);
