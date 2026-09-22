@@ -4,6 +4,13 @@
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
+template <typename  T>
+static void swap(T &a, T &b) noexcept {
+    T tmp = a;
+    a = b;
+    b = tmp;
+}
+
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {
@@ -25,6 +32,7 @@ int main(int argc, char* argv[]) {
 
     int width = image->w;
     int height = image->h;
+    const int imgSize = width * height;
 
     SDL_Window * window = SDL_CreateWindow("SDL Image Window",width,height,SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT);
     if (window == nullptr) {
@@ -35,9 +43,18 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_Surface * surface = SDL_GetWindowSurface(window);
+    SDL_Surface *image_c = SDL_ConvertSurface(image, surface->format);
+    SDL_DestroySurface(image);
+    image = image_c;
+    auto * imagePixels = static_cast<Uint32*>(image->pixels);
 
     //blit stands for BLock Transfer
     SDL_BlitSurface(image, nullptr, surface, nullptr);
+
+    int * pos = static_cast<int*>(SDL_malloc(sizeof(int) * imgSize));
+    for (int i=0;i<imgSize;i++) {
+        pos[i] = i;
+    }
 
     bool shouldRun = true;
     while (shouldRun) {
@@ -71,11 +88,21 @@ int main(int argc, char* argv[]) {
         }
 
         //do other render stuff
+        //shuffle the position order
+        for (int i=0;i<imgSize;i++) {
+            int j = SDL_rand(imgSize);
+            swap(pos[i],pos[j]);
+        }
 
-
+        for (int i=0;i<imgSize;i++) {
+            int j = pos[i];
+            swap(imagePixels[i],imagePixels[j]);
+        }
+        SDL_BlitSurface(image, nullptr, surface, nullptr);
         SDL_UpdateWindowSurface(window);
     }
 
+    SDL_free(pos);
     SDL_DestroySurface(image);
     SDL_DestroyWindow(window);
     SDL_Quit();
