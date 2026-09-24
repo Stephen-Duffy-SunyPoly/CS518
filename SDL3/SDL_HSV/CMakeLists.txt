@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(SDL_hsv)
+project(SDL_hsv CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 
