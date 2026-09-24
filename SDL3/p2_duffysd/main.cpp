@@ -63,7 +63,8 @@ struct Pos {
 };
 
 static int imap(const SDL_Surface * s, const int x, const int y) {
-    return x+y*s->w;
+    int pixelsPerRow = static_cast<int>(s->pitch / sizeof(Uint32));
+    return x+y*pixelsPerRow;
 }
 
 static int imap(const SDL_Surface * s, Pos pos) {
