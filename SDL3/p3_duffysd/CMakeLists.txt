@@ -26,4 +26,4 @@ else()
     target_compile_options(p3_duffysd PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-target_link_libraries(p3_duffysd PRIVATE SDL3::SDL3)
+target_link_libraries(p3_duffysd PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
