@@ -6,8 +6,9 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(SDL3 CONFIG QUIET)
 find_package(SDL3_image CONFIG REQUIRED)
 
+include(FetchContent)
+
 if(NOT SDL3_FOUND)
-    include(FetchContent)
     message("SDL3 not found installed on the system, downloading...")
     set(SDL_TESTS OFF CACHE BOOL "Disable SDL test suite" FORCE)
     # screw all that complicated install and command line args stuf, this is way easier
@@ -20,6 +21,13 @@ if(NOT SDL3_FOUND)
     fetchcontent_makeavailable(SDL3)
 endif ()
 
+#fetchcontent_declare(
+#        SDL3_GFX
+#        GIT_REPOSITORY https://github.com/sabdul-khabir/SDL3_gfx
+#        GIT_TAG v1.0.1
+#)
+#
+#fetchcontent_makeavailable(SDL3_GFX)
 
 add_executable(SDL_render main.cpp
         color.c

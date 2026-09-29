@@ -28,7 +28,13 @@ int main(int argc, char* argv[]) {
     int width = image->w;
     int height = image->h;
 
-    SDL_Window * window = SDL_CreateWindow("SDL Image Window",width,height,SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT);
+    SDL_Window * window = nullptr;
+    SDL_Renderer * renderer = nullptr;
+    if (!SDL_CreateWindowAndRenderer("SDL Image Window",width,height,SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT, &window, &renderer)) {
+        std::cerr << "SDL Window creation failed: " << SDL_GetError() << std::endl;
+        SDL_DestroySurface(image);
+        SDL_Quit();
+    }
     if (window == nullptr) {
         std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
         SDL_DestroySurface(image);
@@ -36,19 +42,16 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-        SDL_Surface * surface = SDL_GetWindowSurface(window);
-    {
-        SDL_Surface *image_c = SDL_ConvertSurface(image, surface->format);
-        SDL_DestroySurface(image);
-        image = image_c;
-    }
+
+    SDL_Texture * texture = SDL_CreateTextureFromSurface(renderer, image);
+
+
+
+    SDL_RenderTexture(renderer, texture, nullptr, nullptr);
 
     int pixelsPerRow = static_cast<int>(image->pitch / sizeof(Uint32));
     auto * pixels = static_cast<Uint32 *>(image->pixels);
     const SDL_PixelFormatDetails * pixelFormatDetails = SDL_GetPixelFormatDetails(image->format);
-
-    //blit stands for BLock Transfer
-    SDL_BlitSurface(image, nullptr, surface, nullptr);
 
     FrameRate fr(30);
 
@@ -71,7 +74,6 @@ int main(int argc, char* argv[]) {
                 std::cout << "Resized: " << newWidth << "x" << newHeight << std::endl;
                 width = newWidth;
                 height = newHeight;
-                surface = SDL_GetWindowSurface(window);
                 break;
             case SDL_EVENT_KEY_DOWN:
                 if (event.key.key == SDLK_ESCAPE) {
@@ -83,46 +85,15 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        SDL_Color c;
-        float h, s, v;
-        //get to address of pixels
-        Uint32 * nextP;
-        float mouseX, mouseY;
-        SDL_GetMouseState(&mouseX,&mouseY);
-        for (int y = 0; y < image->h; y++) {
-            nextP = pixels + pixelsPerRow * y;
-            for (int x = 0; x < image->w; x++) {
-
-                //use SDL get rgb to retrieve the color of the pixel
-                SDL_GetRGB(*nextP,pixelFormatDetails,nullptr,&c.r,&c.g,&c.b);
-                //convert to HSV
-                convertRGBtoHSV(c.r,c.g,c.b,&h,&s,&v);
-
-                //do hsv modifications
-                h += 10.0f;
-                if (h > 360.0f) {
-                    h -= 360.0f;
-                }
-                v = mouseY / static_cast<float>(image->h);
-                s = mouseX / static_cast<float>(image->w);
-
-                //convert back to RGB
-                convertHSVtoRGB(h,s,v,&c.r,&c.g,&c.b);
-                //update the surface value
-                *nextP = SDL_MapRGB(pixelFormatDetails,nullptr,c.r,c.g,c.b);
-
-                nextP++;
-            }
-        }
-
-
-        SDL_BlitSurface(image, nullptr, surface, nullptr);
-        SDL_UpdateWindowSurface(window);
+        SDL_RenderTexture(renderer, texture, nullptr, nullptr);
+        SDL_RenderPresent(renderer);
         fr.delay();
     }
 
+    SDL_DestroyTexture(texture);
     SDL_DestroySurface(image);
     SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
     SDL_Quit();
     return EXIT_SUCCESS;
 }

@@ -22,7 +22,10 @@ void FrameRate::delay() {
     if (fps_ == 0) {
         return;
     }
-    Uint64 toDelay = frameNanoSeconds_ - (SDL_GetTicksNS() - start_);
-    SDL_DelayPrecise(toDelay);
+    Uint64 elapsed = SDL_GetTicksNS() - start_;
+    Uint64 toDelay = frameNanoSeconds_ - elapsed;
+    if (frameNanoSeconds_ > elapsed) {
+        SDL_DelayPrecise(toDelay);
+    }
     start_ += frameNanoSeconds_;
 }
