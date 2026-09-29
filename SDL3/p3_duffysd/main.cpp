@@ -17,6 +17,10 @@ struct RGBColor {
         convertRGBtoHSV(r,g,b,&hsv.h,&hsv.s,&hsv.v);
         return hsv;
     }
+
+    Uint32 operator<<(SDL_Surface * surface) const {
+        return SDL_MapSurfaceRGB(surface,r,g,b);
+    }
 };
 
 static RGBColor operator*(const HSVColor &hc) {
@@ -29,11 +33,44 @@ RGBColor getColor(Uint32 pd, const SDL_PixelFormatDetails *format) {
     RGBColor c{};
     SDL_GetRGB(pd, format, nullptr, &c.r, &c.g, &c.b);
     return c;
+}
+
+struct AreaBlock {
+    int blockX;
+    int blockY;
+    int blockW;
+    int blockH;
+    float brightness;
+    int animationProgress;
+    //TODO impact location
 };
 
 static int imap(const SDL_Surface * s, const int x, const int y) {
     int pixelsPerRow = static_cast<int>(s->pitch / sizeof(Uint32));
     return x+y*pixelsPerRow;
+}
+
+float valueOscillate(int animationFrame) {
+    float frameF = static_cast<float>(animationFrame) / 16.0f;
+    return SDL_sinf(2.5f*frameF) * SDL_expf(-0.4f*frameF) * 0.5f + 0.5f;
+}
+
+
+void desatBlockBlit(SDL_Surface * surface, HSVColor * hsvSurface, AreaBlock &block) {
+    auto * pixels = static_cast<Uint32 *>(surface->pixels);
+    int adjustedX = block.blockX * block.blockW;
+    int adjustedY = block.blockY * block.blockH;
+    for (int y=adjustedY; y < adjustedY + block.blockH && y < surface->h; y++) {
+        for (int x=adjustedX; x < adjustedX + block.blockW && x < surface->w; x++) {
+            //make a copy of this color
+            HSVColor color = hsvSurface[y*surface->w + x];
+            //modify its saturation
+            color.s = 0;
+            color.v *= block.brightness;
+            //convert it to an RGB color and then convert it to a Uint32 for the surface
+            pixels[imap(surface, x, y)] = *color << surface;
+        }
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -113,9 +150,24 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    //create the blocks
+    int numberOfBlocksHorizontal = static_cast<int>(SDL_ceil(image1->w / 200.0));
+    int numberOfBlocksVertical = static_cast<int>(SDL_ceil(image1->h / 140.0));;
+    int totalNumberOfBlocks = numberOfBlocksHorizontal*numberOfBlocksVertical;
+    auto * blocks = new AreaBlock[totalNumberOfBlocks];
+    for (int y=0;y<numberOfBlocksVertical;y++) {
+        for (int x=0;x<numberOfBlocksHorizontal;x++) {
+            blocks[y*numberOfBlocksHorizontal+x] = {
+                x, y, 200, 180, 0.5f, 0
+            };
+        }
+    }
+
+    SDL_Surface * workingSurface = SDL_CreateSurface(surface->w,surface->h,surface->format);
 
 
-    SDL_BlitSurface(image1,nullptr,surface,nullptr);
+    SDL_BlitSurface(image1,nullptr,workingSurface,nullptr);
+    SDL_BlitSurface(workingSurface,nullptr,surface,nullptr);
 
     SDL_Event e;
     bool quit = false;
@@ -129,8 +181,6 @@ int main(int argc, char* argv[]) {
                 case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                     quit = true;
                     break;
-                default:
-                    break;
                 case SDL_EVENT_KEY_DOWN:
                     switch (e.key.key) {
                         case SDLK_ESCAPE:
@@ -140,18 +190,43 @@ int main(int argc, char* argv[]) {
                             break;
                     }
                     break;
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                    switch (e.button.button) {
+                        case SDL_BUTTON_LEFT: {
+                            int bx = static_cast<int>(e.button.x) / blocks[0].blockW;
+                            int by = static_cast<int>(e.button.y) / blocks[0].blockH;
+                            blocks[by*numberOfBlocksHorizontal + bx].animationProgress = 1;
+                        }
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                default:
+                    break;
             }
         }
 
+        for (int i=0;i<totalNumberOfBlocks;i++) {
+            if (blocks[i].animationProgress > 0 && blocks[i].animationProgress < 160) {
+                blocks[i].brightness = valueOscillate(blocks[i].animationProgress);
+                desatBlockBlit(workingSurface,image2HSV,blocks[i]);
+                blocks[i].animationProgress++;
+            }
+        }
 
+        SDL_BlitSurface(workingSurface,nullptr,surface,nullptr);
         SDL_UpdateWindowSurface(window);
         fr.delay();
     }
 
+    delete[] blocks;
     delete[] image2HSV;
     SDL_DestroyWindow(window);
     SDL_DestroySurface(image2);
     SDL_DestroySurface(image1);
+    SDL_DestroySurface(workingSurface);
     SDL_Quit();
     return 0;
 }
