@@ -173,6 +173,8 @@ int main(int argc, char* argv[]) {
     bool quit = false;
 
     FrameRate fr(60);
+
+    float mouseX, mouseY;
     //render loop
     while(!quit) {
         while (SDL_PollEvent(&e)) {
@@ -207,6 +209,7 @@ int main(int argc, char* argv[]) {
                     break;
             }
         }
+        SDL_GetMouseState(&mouseX,&mouseY);
 
         for (int i=0;i<totalNumberOfBlocks;i++) {
             if (blocks[i].animationProgress > 0 && blocks[i].animationProgress < 160) {
@@ -217,6 +220,16 @@ int main(int argc, char* argv[]) {
         }
 
         SDL_BlitSurface(workingSurface,nullptr,surface,nullptr);
+
+        float cannonAngle = SDL_atan2f(mouseY - static_cast<float>(surface->h),mouseX - static_cast<float>(surface->w)/2.0f) * (180.0f/SDL_PI_F);
+        SDL_Surface * unrotatedCannon = SDL_CreateSurface(200,80,SDL_PIXELFORMAT_RGBA8888);
+        SDL_FillSurfaceRect(unrotatedCannon,nullptr,SDL_MapSurfaceRGB(unrotatedCannon,180,180,180));
+        SDL_Surface * rotatedCannon = SDL_RotateSurface(unrotatedCannon, cannonAngle);
+        SDL_Rect cannonOffset{surface->w/2-rotatedCannon->w/2,surface->h-rotatedCannon->h/2,0,0};
+        SDL_BlitSurface(rotatedCannon,nullptr,surface,&cannonOffset);
+        SDL_DestroySurface(unrotatedCannon);
+        SDL_DestroySurface(rotatedCannon);
+
         SDL_UpdateWindowSurface(window);
         fr.delay();
     }
