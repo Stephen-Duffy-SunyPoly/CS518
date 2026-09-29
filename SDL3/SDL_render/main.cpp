@@ -2,6 +2,7 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
 #include "color.h"
+#include "frameRate.hpp"
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
@@ -48,6 +49,8 @@ int main(int argc, char* argv[]) {
 
     //blit stands for BLock Transfer
     SDL_BlitSurface(image, nullptr, surface, nullptr);
+
+    FrameRate fr(30);
 
     bool shouldRun = true;
     while (shouldRun) {
@@ -115,6 +118,7 @@ int main(int argc, char* argv[]) {
 
         SDL_BlitSurface(image, nullptr, surface, nullptr);
         SDL_UpdateWindowSurface(window);
+        fr.delay();
     }
 
     SDL_DestroySurface(image);

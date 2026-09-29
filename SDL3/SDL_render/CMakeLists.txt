@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(SDL_hsv CXX C)
+project(SDL_render CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -23,7 +23,9 @@ endif ()
 
 add_executable(SDL_render main.cpp
         color.c
-        color.h)
+        color.h
+        frameRate.cpp
+        frameRate.hpp)
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC, catching most bugs without noise.
