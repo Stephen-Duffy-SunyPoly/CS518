@@ -1,4 +1,13 @@
 // ReSharper disable CppUseInternalLinkage
+/*Hello!
+ *Run this program with 2 images supplied on the command line.
+ *After loading, the first supplied image should be displayed on the screen.
+ *At the bottom of the screen you will notice a "cannon" following the mouse as you move it around.
+ *Click anywhere to fire a cannon ball at that part of the image.
+ *After the cannon ball hits the target location, that tile will switch to displaying a muted version
+ *of that section of the second image supplied, and the brightness of that tile will fluctuate for a little while.
+ *Some of the pixels around the impact site will also have been scrambled and lightly burned by the impact.
+ **/
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include <SDL3_image/SDL_image.h>
@@ -122,13 +131,14 @@ int main(int argc, char* argv[]) {
     if (image1 == nullptr) {
         SDL_Log("Error loading Image! SDL Error: %s", SDL_GetError());
         SDL_Quit();
-        return 1;
+        return 2;
     }
     SDL_Surface * image2 = IMG_Load(argv[2]);
     if (image2 == nullptr) {
         SDL_Log("Error loading Image! SDL Error: %s", SDL_GetError());
         SDL_DestroySurface(image1);
         SDL_Quit();
+        return 3;
     }
 
     SDL_Window* window = SDL_CreateWindow("Prog 2: duffysd",image1->w,image1->h,0);
@@ -138,7 +148,7 @@ int main(int argc, char* argv[]) {
         SDL_DestroySurface(image1);
         SDL_DestroySurface(image2);
         SDL_Quit();
-        return 1;
+        return 4;
     }
 
     SDL_Surface * surface = SDL_GetWindowSurface(window);
@@ -148,7 +158,7 @@ int main(int argc, char* argv[]) {
         SDL_DestroySurface(image2);
         SDL_DestroyWindow(window);
         SDL_Quit();
-        return 1;
+        return 5;
     }
     //reformat both images
     {
@@ -189,7 +199,7 @@ int main(int argc, char* argv[]) {
     for (int y=0;y<numberOfBlocksVertical;y++) {
         for (int x=0;x<numberOfBlocksHorizontal;x++) {
             blocks[y*numberOfBlocksHorizontal+x] = {
-                x, y, 140, 80, 0.5f, 0
+                x, y, 140, 80, 0.5f, 0, 0, 0
             };
         }
     }
@@ -288,14 +298,14 @@ int main(int argc, char* argv[]) {
         if (cannonShooting) {
             cannonBallX += SDL_cosf(cannonBallAngle) * cannonBallSpeed;
             cannonBallY += SDL_sinf(cannonBallAngle) * cannonBallSpeed;
-            SDL_Rect ballOffset{(int)(cannonBallX-cannonBallSource->w/2),(int)(cannonBallY-cannonBallSource->h/2),0,0};
+            SDL_Rect ballOffset{static_cast<int>(cannonBallX)-cannonBallSource->w/2,static_cast<int>(cannonBallY)-cannonBallSource->h/2,0,0};
             SDL_BlitSurface(cannonBallSource,nullptr,surface,&ballOffset);
             //check if it hit
             if (cannonBallY < targetY) {
                 cannonShooting = false;
                 blocks[targetBlockY*numberOfBlocksHorizontal + targetBlockX].animationProgress = 1;
-                blocks[targetBlockY*numberOfBlocksHorizontal + targetBlockX].impactX = (int)targetX;
-                blocks[targetBlockY*numberOfBlocksHorizontal + targetBlockX].impactY = (int)targetY;
+                blocks[targetBlockY*numberOfBlocksHorizontal + targetBlockX].impactX = static_cast<int>(targetX);
+                blocks[targetBlockY*numberOfBlocksHorizontal + targetBlockX].impactY = static_cast<int>(targetY);
             }
         }
 
