@@ -169,6 +169,29 @@ int main(int argc, char* argv[]) {
     SDL_BlitSurface(image1,nullptr,workingSurface,nullptr);
     SDL_BlitSurface(workingSurface,nullptr,surface,nullptr);
 
+    SDL_Surface * cannonBallSource = SDL_CreateSurface(60,60,SDL_PIXELFORMAT_RGBA8888);
+    {
+        auto * cannonPixels = static_cast<Uint32 *>(cannonBallSource->pixels);
+        //draw a circle on that surface
+        for (int y=0;y<cannonBallSource->h;y++) {
+            int yd = cannonBallSource->h/2 - y;
+            for (int x=0;x<cannonBallSource->w;x++) {
+                int xd = cannonBallSource->w/2 - x;
+                if (SDL_sqrtf(static_cast<float>(yd * yd + xd * xd)) < 30) {
+                    cannonPixels[imap(cannonBallSource,x,y)] = SDL_MapSurfaceRGB(cannonBallSource,0,0,0);
+                }
+            }
+        }
+    }
+
+    float cannonBallAngle = 0;
+    bool cannonShooting = false;
+    float cannonBallX = 0, cannonBallY = 0;
+    float targetX = 0, targetY = 0;
+    int targetBlockX = 0, targetBlockY = 0;
+
+    constexpr float cannonBallSpeed = 15.f;
+
     SDL_Event e;
     bool quit = false;
 
@@ -195,9 +218,18 @@ int main(int argc, char* argv[]) {
                 case SDL_EVENT_MOUSE_BUTTON_DOWN:
                     switch (e.button.button) {
                         case SDL_BUTTON_LEFT: {
-                            int bx = static_cast<int>(e.button.x) / blocks[0].blockW;
-                            int by = static_cast<int>(e.button.y) / blocks[0].blockH;
-                            blocks[by*numberOfBlocksHorizontal + bx].animationProgress = 1;
+                            if (!cannonShooting) {
+                                targetBlockX = static_cast<int>(e.button.x) / blocks[0].blockW;
+                                targetBlockY = static_cast<int>(e.button.y) / blocks[0].blockH;
+                                targetX = e.button.x;
+                                targetY = e.button.y;
+                                cannonBallX = static_cast<float>(surface->w)/2.f;
+                                cannonBallY = static_cast<float>(surface->h);
+                                cannonBallAngle = SDL_atan2f(targetY - static_cast<float>(surface->h),targetX - static_cast<float>(surface->w)/2.0f);
+                                // blocks[by*numberOfBlocksHorizontal + bx].animationProgress = 1;
+
+                                cannonShooting = true;
+                            }
                         }
                             break;
 
@@ -220,6 +252,18 @@ int main(int argc, char* argv[]) {
         }
 
         SDL_BlitSurface(workingSurface,nullptr,surface,nullptr);
+
+        if (cannonShooting) {
+            cannonBallX += SDL_cosf(cannonBallAngle) * cannonBallSpeed;
+            cannonBallY += SDL_sinf(cannonBallAngle) * cannonBallSpeed;
+            SDL_Rect ballOffset{(int)(cannonBallX-cannonBallSource->w/2),(int)(cannonBallY-cannonBallSource->h/2),0,0};
+            SDL_BlitSurface(cannonBallSource,nullptr,surface,&ballOffset);
+            //check if it hit
+            if (cannonBallY < targetY) {
+                cannonShooting = false;
+                blocks[targetBlockY*numberOfBlocksHorizontal + targetBlockX].animationProgress = 1;
+            }
+        }
 
         float cannonAngle = SDL_atan2f(mouseY - static_cast<float>(surface->h),mouseX - static_cast<float>(surface->w)/2.0f) * (180.0f/SDL_PI_F);
         SDL_Surface * unrotatedCannon = SDL_CreateSurface(200,80,SDL_PIXELFORMAT_RGBA8888);
