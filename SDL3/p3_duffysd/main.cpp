@@ -42,8 +42,16 @@ struct AreaBlock {
     int blockH;
     float brightness;
     int animationProgress;
-    //TODO impact location
+    int impactX;
+    int impactY;
 };
+
+template<typename T>
+void swap(T &a, T &b) noexcept {
+    T tmp = a;
+    a = b;
+    b = tmp;
+}
 
 static int imap(const SDL_Surface * s, const int x, const int y) {
     int pixelsPerRow = static_cast<int>(s->pitch / sizeof(Uint32));
@@ -65,10 +73,32 @@ void desatBlockBlit(SDL_Surface * surface, HSVColor * hsvSurface, AreaBlock &blo
             //make a copy of this color
             HSVColor color = hsvSurface[y*surface->w + x];
             //modify its saturation
-            color.s = 0;
+            color.s = 0.1;
             color.v *= block.brightness;
             //convert it to an RGB color and then convert it to a Uint32 for the surface
             pixels[imap(surface, x, y)] = *color << surface;
+        }
+    }
+}
+
+void dustNearImpact(HSVColor * hsvSurface, AreaBlock &block, int sWidth, int sHeight) {
+    constexpr int NUMBER_OF_SWAPS = 160;
+    //generate swap locations
+    int indices[NUMBER_OF_SWAPS];
+    //generate some random locations around the impact site
+    for (int i=0;i<NUMBER_OF_SWAPS;i++) {
+        int RNG = SDL_rand(0xFFF);
+        int xoff = (RNG & 0x3F) - 31;
+        int yoff = (RNG >> 6 & 0x3F) - 31;
+        indices[i] = (yoff+block.impactY)*sWidth + (xoff+block.impactX);
+    }
+    int direction[] = {-sWidth,-sWidth+1,1,sWidth+1,sWidth,sWidth-1,-1,-sWidth-1};
+    int max = sWidth * sHeight;
+    for (int i=0;i<NUMBER_OF_SWAPS;i++) {
+        //randomly decide where to swap them with
+        int other = indices[i] + direction[SDL_rand((8))];
+        if (indices[i] < max && other < max && indices[i] >= 0 && other >= 0) {
+            swap(hsvSurface[indices[i]], hsvSurface[other]);
         }
     }
 }
@@ -226,8 +256,6 @@ int main(int argc, char* argv[]) {
                                 cannonBallX = static_cast<float>(surface->w)/2.f;
                                 cannonBallY = static_cast<float>(surface->h);
                                 cannonBallAngle = SDL_atan2f(targetY - static_cast<float>(surface->h),targetX - static_cast<float>(surface->w)/2.0f);
-                                // blocks[by*numberOfBlocksHorizontal + bx].animationProgress = 1;
-
                                 cannonShooting = true;
                             }
                         }
@@ -246,6 +274,9 @@ int main(int argc, char* argv[]) {
         for (int i=0;i<totalNumberOfBlocks;i++) {
             if (blocks[i].animationProgress > 0 && blocks[i].animationProgress < 160) {
                 blocks[i].brightness = valueOscillate(blocks[i].animationProgress);
+                if (blocks[i].animationProgress < 50) {
+                    dustNearImpact(image2HSV, blocks[i], workingSurface->w, workingSurface->h);
+                }
                 desatBlockBlit(workingSurface,image2HSV,blocks[i]);
                 blocks[i].animationProgress++;
             }
@@ -262,6 +293,8 @@ int main(int argc, char* argv[]) {
             if (cannonBallY < targetY) {
                 cannonShooting = false;
                 blocks[targetBlockY*numberOfBlocksHorizontal + targetBlockX].animationProgress = 1;
+                blocks[targetBlockY*numberOfBlocksHorizontal + targetBlockX].impactX = (int)targetX;
+                blocks[targetBlockY*numberOfBlocksHorizontal + targetBlockX].impactY = (int)targetY;
             }
         }
 
