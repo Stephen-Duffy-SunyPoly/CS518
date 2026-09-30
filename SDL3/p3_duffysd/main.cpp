@@ -99,6 +99,7 @@ void dustNearImpact(HSVColor * hsvSurface, AreaBlock &block, int sWidth, int sHe
         int other = indices[i] + direction[SDL_rand((8))];
         if (indices[i] < max && other < max && indices[i] >= 0 && other >= 0) {
             swap(hsvSurface[indices[i]], hsvSurface[other]);
+            hsvSurface[other].v *= 0.9;
         }
     }
 }
@@ -181,14 +182,14 @@ int main(int argc, char* argv[]) {
     }
 
     //create the blocks
-    int numberOfBlocksHorizontal = static_cast<int>(SDL_ceil(image1->w / 200.0));
-    int numberOfBlocksVertical = static_cast<int>(SDL_ceil(image1->h / 140.0));;
+    int numberOfBlocksHorizontal = static_cast<int>(SDL_ceil(image1->w / 140.0));
+    int numberOfBlocksVertical = static_cast<int>(SDL_ceil(image1->h / 80.0));;
     int totalNumberOfBlocks = numberOfBlocksHorizontal*numberOfBlocksVertical;
     auto * blocks = new AreaBlock[totalNumberOfBlocks];
     for (int y=0;y<numberOfBlocksVertical;y++) {
         for (int x=0;x<numberOfBlocksHorizontal;x++) {
             blocks[y*numberOfBlocksHorizontal+x] = {
-                x, y, 200, 180, 0.5f, 0
+                x, y, 140, 80, 0.5f, 0
             };
         }
     }
