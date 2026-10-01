@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
             .h = static_cast<float>(mouseImage->h)
         };
         SDL_RenderTexture(renderer, mouseImage, nullptr, &mouseRect);
-        circleColor(renderer, mouseX, mouseY, 18, SDL_rand_bits());
+        circleColor(renderer, static_cast<Sint16>(mouseX), static_cast<Sint16>(mouseY), 20, SDL_rand_bits());
 
         SDL_RenderPresent(renderer);
         fr.delay();

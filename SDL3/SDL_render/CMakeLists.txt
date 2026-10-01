@@ -22,11 +22,17 @@ if(NOT SDL3_FOUND)
     FetchContent_MakeAvailable(SDL3)
 endif ()
 
+# my SDL install does not have this apparently, so this is necessary for GFX to work
+if (NOT SDL3_LIB)
+    set(SDL3_LIB SDL3::SDL3)
+endif ()
+
 FetchContent_Declare(
         SDL3_GFX
         GIT_REPOSITORY https://github.com/sabdul-khabir/SDL3_gfx
         GIT_TAG v1.0.1
 )
+
 
 FetchContent_MakeAvailable(SDL3_GFX)
 
@@ -44,4 +50,7 @@ else()
     target_compile_options(SDL_render PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-target_link_libraries(SDL_render PRIVATE SDL3::SDL3 SDL3_image::SDL3_image SDL3_GFX_Static)
+target_include_directories(SDL_render PRIVATE ${sdl3_gfx_SOURCE_DIR})
+#manually specifying this is also necessary for some reason
+target_link_libraries(SDL3_gfx_Static PRIVATE SDL3::SDL3)
+target_link_libraries(SDL_render PRIVATE SDL3::SDL3 SDL3_image::SDL3_image SDL3_gfx_Static)
