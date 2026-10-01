@@ -1,0 +1,57 @@
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <vector>
+
+int main(int argc, char *argv[]) {
+    std::vector<std::string> args(argv, argv + argc);
+
+    if (argc < 2) {
+        std::cerr << "Usage: " << args[0] << " <file list>" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::ofstream headerFile("assets.h");
+    headerFile << "#include <stdint.h>"<<std::endl<<std::endl;
+    std::ofstream dataFile("assets.c");
+    dataFile << "#include \"assets.h\"" << std::endl;
+
+    for (int i = 1; i < argc; i++) {
+        std::string fileName = std::filesystem::path(args[i]).filename().string();
+        if (fileName[0] == '0' || fileName[0] == '1' || fileName[0] == '2' || fileName[0] == '3' || fileName[0] == '4' || fileName[0] == '5' || fileName[0] == '6' || fileName[0] == '7' || fileName[0] == '8' || fileName[0] == '9') {
+            fileName = "_" + fileName;
+        }
+        for (int i = 0; i < fileName.length(); i++) {
+            if (fileName[i] == '.') {
+                fileName[i] = '_';
+            }
+        }
+        std::ifstream assetFile(args[i], std::ios::binary);
+        if (!assetFile.is_open()) {
+            std::cerr << "Could not open file " << args[i] << std::endl;
+            continue;
+        }
+
+        uint64_t bytesWritten = std::filesystem::file_size(args[i]);
+        dataFile << "uint8_t * "<<fileName<<"_data = {";
+        dataFile << std::hex;
+        for (uint64_t i = 0; i < bytesWritten; i++) {
+            uint8_t byte = assetFile.get();
+            dataFile <<"0x"<< static_cast<int>(byte);
+            if (i != (bytesWritten - 1)) {
+                dataFile << ", ";
+            }
+        }
+        dataFile << "};" << std::endl;
+        //wright the size
+        headerFile << "uint64_t "<<fileName<<"_size = " << bytesWritten << ";" << std::endl;
+        headerFile << "uint8_t * "<<fileName<<"_data;" << std::endl;
+
+        assetFile.close();
+    }
+
+    headerFile.close();
+    dataFile.close();
+
+    return EXIT_SUCCESS;
+}
