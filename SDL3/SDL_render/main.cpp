@@ -1,6 +1,7 @@
 #include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
+#include <SDL3_gfxPrimitives.h>
 #include "frameRate.hpp"
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
@@ -49,6 +50,7 @@ int main(int argc, char* argv[]) {
         SDL_Quit();
         return EXIT_FAILURE;
     }
+    SDL_SetSurfaceColorKey(tmpImage, true, *static_cast<Uint32*>(tmpImage->pixels));
     SDL_Texture * mouseImage = SDL_CreateTextureFromSurface(renderer, tmpImage);
     SDL_DestroySurface(tmpImage);
     tmpImage = nullptr;
@@ -99,6 +101,7 @@ int main(int argc, char* argv[]) {
             .h = static_cast<float>(mouseImage->h)
         };
         SDL_RenderTexture(renderer, mouseImage, nullptr, &mouseRect);
+        circleColor(renderer, mouseX, mouseY, 18, SDL_rand_bits());
 
         SDL_RenderPresent(renderer);
         fr.delay();
