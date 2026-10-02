@@ -47,7 +47,11 @@ int main(int argc, char *argv[]) {
         dataFile << std::hex;
         for (uint64_t j = 0; j < bytesWritten; j++) {
             auto byte = static_cast<uint8_t>(assetFile.get());
-            dataFile <<"0x"<< static_cast<int>(byte);
+            if (byte == 0) {
+                dataFile <<"0";
+            } else {
+                dataFile <<"0x"<< static_cast<int>(byte);
+            }
             if (j != (bytesWritten - 1)) {
                 dataFile << ", ";
             }
