@@ -12,7 +12,17 @@ int main(int argc, char *argv[]) {
     }
 
     std::ofstream headerFile("assets.h");
+    //header guard
+    headerFile << "#ifndef ASSETS_H" << std::endl;
+    headerFile << "#define ASSETS_H" << std::endl;
+    //int types
     headerFile << "#include <stdint.h>"<<std::endl<<std::endl;
+    //c linkage
+    headerFile << "#ifdef __cplusplus" << std::endl;
+    headerFile << "extern \"C\" {" << std::endl;
+    headerFile << "#endif" << std::endl<<std::endl;
+
+
     std::ofstream dataFile("assets.c");
     dataFile << "#include \"assets.h\"" << std::endl;
 
@@ -33,7 +43,7 @@ int main(int argc, char *argv[]) {
         }
 
         uint64_t bytesWritten = std::filesystem::file_size(args[i]);
-        dataFile << "uint8_t * "<<fileName<<"_data = {";
+        dataFile << "uint8_t "<<fileName<<"_data[] = {";
         dataFile << std::hex;
         for (uint64_t i = 0; i < bytesWritten; i++) {
             uint8_t byte = assetFile.get();
@@ -44,12 +54,19 @@ int main(int argc, char *argv[]) {
         }
         dataFile << "};" << std::endl;
         //wright the size
-        headerFile << "uint64_t "<<fileName<<"_size = " << bytesWritten << ";" << std::endl;
-        headerFile << "uint8_t * "<<fileName<<"_data;" << std::endl;
+        headerFile << "const uint64_t "<<fileName<<"_size = " << bytesWritten << ";" << std::endl;
+        headerFile << "extern uint8_t "<<fileName<<"_data[];" << std::endl;
 
         assetFile.close();
     }
 
+    //close the c linkage
+    headerFile << std::endl << "#ifdef __cplusplus" << std::endl;
+    headerFile << "}" << std::endl;
+    headerFile << "#endif" << std::endl;
+
+    //close the header guard
+    headerFile << "#endif" << std::endl;
     headerFile.close();
     dataFile.close();
 

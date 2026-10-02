@@ -12,3 +12,5 @@ else()
     # all other non Microsoft compilers
     target_compile_options(compile_resource PRIVATE -Wall -Wextra -Wpedantic)
 endif()
+
+add_executable(test test.cpp assets.c)
