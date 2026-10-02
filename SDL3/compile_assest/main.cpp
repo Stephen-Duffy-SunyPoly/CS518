@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
         for (uint64_t j = 0; j < bytesWritten; j++) {
             auto byte = static_cast<uint8_t>(assetFile.get());
             dataFile <<"0x"<< static_cast<int>(byte);
-            if (i != (bytesWritten - 1)) {
+            if (j != (bytesWritten - 1)) {
                 dataFile << ", ";
             }
         }
