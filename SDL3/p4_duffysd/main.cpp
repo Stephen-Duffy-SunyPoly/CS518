@@ -3,6 +3,7 @@
 #include <SDL3_gfxPrimitives.h>
 #include <assets.h>
 #include "frameRate.hpp"
+#include "color.h"
 
 
 struct Pos {
@@ -18,6 +19,16 @@ struct Pos {
         const float xDif = other.x - x;
         const float yDif = other.y - y;
         return xDif*xDif + yDif*yDif;
+    }
+};
+
+struct MyColor {
+    Uint8 r;
+    Uint8 g;
+    Uint8 b;
+    Uint8 a;
+    Uint32 operator*() const {
+        return a << 24 | b << 16 | g << 8 | r;
     }
 };
 
@@ -60,6 +71,15 @@ int main() {
 
     Pos positionBuffer[30] = {};
     int lastPos = 0;
+    bool radiance[360] = {};
+    int radianceRoll = 0;
+    MyColor colorLut[360] = {};
+    for (int i = 0; i < 360; ++i) {
+        MyColor color{};
+        convertHSVtoRGB(static_cast<float>(i),1,1,&color.r,&color.g,&color.b);
+        color.a = 255;
+        colorLut[i] = color;
+    }
 
     bool should_quit = false;
     FrameRate frameRate;
@@ -106,8 +126,23 @@ int main() {
         }
 
         if (distanceTotal < 1) {
-            circleColor(renderer, static_cast<Sint16>(mouse.x), static_cast<Sint16>(mouse.y), 30,0xFFFF00FF);
+            //so the docs say the color is RGBA and the code seems to think that, however it ia actually ABGR
+            for (int i=0;i<180;i++) {
+                if (radiance[i]) {
+                    MyColor color = colorLut[(i+radianceRoll)%360];
+                    circleColor(renderer,static_cast<Sint16>(mouse.x), static_cast<Sint16>(mouse.y),30+i,*color);
+                }
+            }
+            radiance[radianceRoll%360] = true;
+            radianceRoll++;
+            radianceRoll %= 360;
+            // circleColor(renderer, static_cast<Sint16>(mouse.x), static_cast<Sint16>(mouse.y), 30,0xFF00FF00);
+        } else {
+            //reset it
+            SDL_memset(radiance,0,sizeof(radiance));
+            radianceRoll = 0;
         }
+
 
         SDL_RenderPresent(renderer);
         frameRate.delay();

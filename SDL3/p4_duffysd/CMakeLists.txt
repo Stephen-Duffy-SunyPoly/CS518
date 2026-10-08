@@ -46,7 +46,7 @@ add_custom_command(
 )
 
 #regular application stuff
-add_executable(p4_duffysd main.cpp frameRate.cpp ${ASSET_OUTPUT_SOURCE})
+add_executable(p4_duffysd main.cpp frameRate.cpp color.c ${ASSET_OUTPUT_SOURCE})
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC
