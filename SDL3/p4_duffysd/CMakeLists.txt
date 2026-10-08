@@ -55,7 +55,7 @@ else()
     # all other non Microsoft compilers
     target_compile_options(p4_duffysd PRIVATE -Wall -Wextra -Wpedantic)
 endif()
-target_include_directories(p4_duffysd PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(p4_duffysd PRIVATE ${CMAKE_CURRENT_BINARY_DIR} ${sdl3_gfx_SOURCE_DIR})
 
 target_link_libraries(SDL3_gfx_Static PRIVATE SDL3::SDL3)
 

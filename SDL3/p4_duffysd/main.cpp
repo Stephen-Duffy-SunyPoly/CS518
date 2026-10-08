@@ -1,5 +1,6 @@
 #include <SDL3/SDL.h>
 #include <SDL3_image/SDL_image.h>
+#include <SDL3_gfxPrimitives.h>
 #include <assets.h>
 #include "frameRate.hpp"
 
@@ -8,9 +9,15 @@ struct Pos {
     float x, y;
     Pos operator*(const Pos &other) const {
         //get 10% of the way there
-        const float xDif = other.x - x ;
+        const float xDif = other.x - x;
         const float yDif = other.y - y;
         return {.x = x+xDif*0.1f, .y = y+yDif*0.1f};
+    }
+
+    float operator^(const Pos &other) const {
+        const float xDif = other.x - x;
+        const float yDif = other.y - y;
+        return xDif*xDif + yDif*yDif;
     }
 };
 
@@ -34,6 +41,8 @@ int main() {
     SDL_Texture * background = SDL_CreateTextureFromSurface(renderer, backgroundSurface);
     SDL_DestroySurface(backgroundSurface);
 
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
     SDL_IOStream * pizzaIoStream = SDL_IOFromConstMem(pizza_png_data, pizza_png_size);
     SDL_Surface * pizzaSurface = IMG_Load_IO(pizzaIoStream,true);
     SDL_SetSurfaceColorKey(pizzaSurface,true, *static_cast<Uint32 *>(pizzaSurface->pixels));
@@ -46,6 +55,8 @@ int main() {
     SDL_SetSurfaceColorKey(puscheenSurface, true, *static_cast<Uint32 *>(puscheenSurface->pixels));
     SDL_Texture * pucheen = SDL_CreateTextureFromSurface(renderer, puscheenSurface);
     SDL_DestroySurface(puscheenSurface);
+
+    SDL_SetTextureBlendMode(pucheen,SDL_BLENDMODE_BLEND);
 
     Pos positionBuffer[30] = {};
     int lastPos = 0;
@@ -80,14 +91,22 @@ int main() {
         SDL_RenderTexture(renderer, background,nullptr,nullptr);
 
         //update the new position
+        //moving every frame is fine, I think your frame rate limiter is just broken
         positionBuffer[(lastPos+1)%30] = positionBuffer[lastPos] * mouse;
         lastPos = (lastPos +1) %30;
 
+        float distanceTotal = 0;
         //render the pucheens
         for (int i=0;i<30;i++) {
             Pos pos = positionBuffer[(lastPos+i) % 30];
+            distanceTotal += pos ^ positionBuffer[(lastPos+i+1)%30];
             SDL_FRect destPos = {.x = pos.x-25,.y = pos.y-20,.w = static_cast<float>(pucheen->w),.h = static_cast<float>(pucheen->h)};
+            SDL_SetTextureAlphaModFloat(pucheen, (static_cast<float>(i)+1.0f)/30.0f);
             SDL_RenderTexture(renderer, pucheen,nullptr, &destPos);
+        }
+
+        if (distanceTotal < 1) {
+            circleColor(renderer, static_cast<Sint16>(mouse.x), static_cast<Sint16>(mouse.y), 30,0xFFFF00FF);
         }
 
         SDL_RenderPresent(renderer);
