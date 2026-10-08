@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
             fileName = "_" + fileName; // NOLINT(*-inefficient-string-concatenation)
         }
         for (int j = 0; j < fileName.length(); j++) {
-            if (fileName[j] == '.') {
+            if (fileName[j] == '.' || fileName[j] == ' ') {
                 fileName[j] = '_';
             }
         }
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
         }
 
         uint64_t bytesWritten = std::filesystem::file_size(args[i]);
-        dataFile << "uint8_t "<<fileName<<"_data[] = {";
+        dataFile << "const uint8_t "<<fileName<<"_data[] = {";
         dataFile << std::hex;
         for (uint64_t j = 0; j < bytesWritten; j++) {
             auto byte = static_cast<uint8_t>(assetFile.get());
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
         dataFile << "};" << std::endl;
         //wright the size
         headerFile << "const uint64_t "<<fileName<<"_size = " << bytesWritten << ";" << std::endl;
-        headerFile << "extern uint8_t "<<fileName<<"_data[];" << std::endl;
+        headerFile << "extern const uint8_t "<<fileName<<"_data[];" << std::endl;
 
         assetFile.close();
     }
