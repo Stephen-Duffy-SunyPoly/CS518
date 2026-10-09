@@ -15,6 +15,8 @@ int main(int argc, char *argv[]) {
     //header guard
     headerFile << "#ifndef ASSETS_H" << std::endl;
     headerFile << "#define ASSETS_H" << std::endl;
+    //sdl types
+    headerFile << "#include <SDL3/SDL_stdinc.h>" << std::endl;
     //c linkage
     headerFile << "#ifdef __cplusplus" << std::endl;
     headerFile << "extern \"C\" {" << std::endl;
@@ -41,7 +43,7 @@ int main(int argc, char *argv[]) {
         }
 
         uint64_t bytesWritten = std::filesystem::file_size(args[i]);
-        dataFile << "const char "<<fileName<<"_data[] = {";
+        dataFile << "const Uint8 "<<fileName<<"_data[] = {";
         dataFile << std::hex;
         for (uint64_t j = 0; j < bytesWritten; j++) {
             auto byte = static_cast<uint8_t>(assetFile.get());
@@ -57,7 +59,7 @@ int main(int argc, char *argv[]) {
         dataFile << "};" << std::endl;
         //wright the size
         headerFile << "const int "<<fileName<<"_size = " << bytesWritten << ";" << std::endl;
-        headerFile << "extern const char "<<fileName<<"_data[];" << std::endl;
+        headerFile << "extern const Uint8 "<<fileName<<"_data[];" << std::endl;
 
         assetFile.close();
     }
