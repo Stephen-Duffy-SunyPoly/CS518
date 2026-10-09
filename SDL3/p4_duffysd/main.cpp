@@ -130,7 +130,7 @@ int main() {
             for (int i=0;i<180;i++) {
                 if (radiance[i]) {
                     MyColor color = colorLut[(i+radianceRoll)%360];
-                    circleColor(renderer,static_cast<Sint16>(mouse.x), static_cast<Sint16>(mouse.y),30+i,*color);
+                    circleColor(renderer,static_cast<Sint16>(mouse.x), static_cast<Sint16>(mouse.y),static_cast<Sint16>(30+i),*color);
                 }
             }
             radiance[radianceRoll%180] = true;
@@ -139,8 +139,8 @@ int main() {
                 MyColor c2 = colorLut[(radianceRoll+90)%360];
                 MyColor c3 = colorLut[(radianceRoll+180)%360];
                 MyColor c4 = colorLut[(radianceRoll+270)%360];
-                float sv = SDL_sinf(static_cast<float>(radianceRoll) * SDL_PI_F/180.0f);
-                float cv = SDL_cosf(static_cast<float>(radianceRoll) * SDL_PI_F/180.0f);
+                const float sv = SDL_sinf(static_cast<float>(radianceRoll) * SDL_PI_F/180.0f);
+                const float cv = SDL_cosf(static_cast<float>(radianceRoll) * SDL_PI_F/180.0f);
                 thickLineRGBA(renderer, static_cast<Sint16>(cv*30+mouse.x),static_cast<Sint16>(sv*30+mouse.y),static_cast<Sint16>(cv*210+mouse.x),static_cast<Sint16>(sv*210+mouse.y),15, c1.r,c1.g,c1.b,c1.a);
                 thickLineRGBA(renderer, static_cast<Sint16>(sv*30+mouse.x),static_cast<Sint16>(cv*30+mouse.y),static_cast<Sint16>(sv*210+mouse.x),static_cast<Sint16>(cv*210+mouse.y),15, c2.r,c2.g,c2.b,c2.a);
                 thickLineRGBA(renderer, static_cast<Sint16>(-cv*30+mouse.x),static_cast<Sint16>(-sv*30+mouse.y),static_cast<Sint16>(-cv*210+mouse.x),static_cast<Sint16>(-sv*210+mouse.y),15, c3.r,c3.g,c3.b,c3.a);
