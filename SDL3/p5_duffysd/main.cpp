@@ -117,10 +117,24 @@ int main() {
         Sint16 p5y[] = {277, 288, 293, 296, 298, 297, 293, 286, 278, 264, 256, 251, 260, 265, 270, 273, 273, 271, 268};
         filledPolygonRGBA(renderer, p5x,p5y,19,0xF3,0xC3,0,255);
 
-        stringRGBA(renderer, 200,400, "Play Station",255,255,255,255);
+        stringRGBA(renderer, 250-48,400, "Play Station",255,255,255,255);
 
         //logo 2
-        boxRGBA(renderer, 500,0,1000,500, 255,255,255,255);
+        boxRGBA(renderer, 500,0,1000,500, 0xE4, 0x1B, 0x23,255);
+        boxRGBA(renderer, 500+230, 67, 500+267,328,255,255,255,255);
+
+        for (Sint16 i=0;i<20;i++) {
+            Sint16 swoopLeftX[] = {static_cast<Sint16>(500 + 222 - i),static_cast<Sint16>(500 + 222 - i),500+87};
+            Sint16 swoopRightX[] = {static_cast<Sint16>(500 + 275 + i),static_cast<Sint16>(500 + 275 + i),500+410};
+            for (Sint16 j=0;j<38;j++) {
+                auto v = static_cast<Sint16>(328 - j);
+                Sint16 swoopY[] = {67,v,v};
+                bezierRGBA(renderer,swoopLeftX,swoopY,3,50,255,255,255,255);
+                bezierRGBA(renderer,swoopRightX,swoopY,3,50,255,255,255,255);
+            }
+        }
+        stringRGBA(renderer,500+250-20,400,"Atari",255,255,255,255);
+
 
         SDL_RenderPresent(renderer);
     }
