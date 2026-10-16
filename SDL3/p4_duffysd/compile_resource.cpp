@@ -29,10 +29,10 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         std::string fileName = std::filesystem::path(args[i]).filename().string();
         if (fileName[0] == '0' || fileName[0] == '1' || fileName[0] == '2' || fileName[0] == '3' || fileName[0] == '4' || fileName[0] == '5' || fileName[0] == '6' || fileName[0] == '7' || fileName[0] == '8' || fileName[0] == '9') {
-            fileName = "_" + fileName; // NOLINT(*-inefficient-string-concatenation)
+            fileName = "file_" + fileName; // NOLINT(*-inefficient-string-concatenation)
         }
         for (int j = 0; j < fileName.length(); j++) {
-            if (fileName[j] == '.' || fileName[j] == ' ') {
+            if (fileName[j] == '.' || fileName[j] == ' ' || fileName[j] == '-') {
                 fileName[j] = '_';
             }
         }
@@ -43,15 +43,21 @@ int main(int argc, char *argv[]) {
         }
 
         uint64_t bytesWritten = std::filesystem::file_size(args[i]);
+        std::vector<uint8_t> fileBytes;
+        fileBytes.resize(bytesWritten);
+        assetFile.read(reinterpret_cast<char*>(fileBytes.data()), static_cast<std::streamsize>(bytesWritten));
+
         dataFile << "const Uint8 "<<fileName<<"_data[] = {";
-        dataFile << std::hex;
+        // dataFile << std::hex;
         for (uint64_t j = 0; j < bytesWritten; j++) {
-            auto byte = static_cast<uint8_t>(assetFile.get());
-            if (byte == 0) {
-                dataFile <<"0";
-            } else {
-                dataFile <<"0x"<< static_cast<int>(byte);
-            }
+            auto byte = fileBytes[j];
+            // if (byte == 0) {
+            //     dataFile << "0";
+            // } else {
+            //     dataFile << "0x" << static_cast<int>(byte);
+            // }
+            dataFile << static_cast<int>(byte);
+            //non hex is actually smaller
             if (j != (bytesWritten - 1)) {
                 dataFile << ", ";
             }
