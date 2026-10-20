@@ -38,7 +38,9 @@ FetchContent_MakeAvailable(SDL3_GFX)
 
 add_executable(SDL_sprites main.cpp
         frameRate.cpp
-        frameRate.hpp)
+        frameRate.hpp
+        spriteSheet.cpp
+        spriteSheet.hpp)
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC, catching most bugs without noise.

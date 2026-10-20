@@ -3,10 +3,9 @@
 #include <SDL3_image/SDL_image.h>
 #include <SDL3_gfxPrimitives.h>
 #include "frameRate.hpp"
+#include "spriteSheet.hpp"
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
-
-static auto backgroundFile = "../backdrop.jpeg";
 
 int main(int argc, char* argv[]) {
 
@@ -15,37 +14,44 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    SDL_Surface * tmpImage = IMG_Load(backgroundFile);
-
-    if (tmpImage == nullptr) {
-        std::cerr << "Failed to load image: " << SDL_GetError() << std::endl;
-        SDL_Quit();
-        return EXIT_FAILURE;
-    }
-
-    int width = tmpImage->w;
-    int height = tmpImage->h;
+    int width = 500;
+    int height = 500;
 
     SDL_Window * window = nullptr;
     SDL_Renderer * renderer = nullptr;
     if (!SDL_CreateWindowAndRenderer("SDL Image Window",width,height,SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT, &window, &renderer)) {
         std::cerr << "SDL Window creation failed: " << SDL_GetError() << std::endl;
-        SDL_DestroySurface(tmpImage);
         SDL_Quit();
     }
     if (window == nullptr) {
         std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
-        SDL_DestroySurface(tmpImage);
         SDL_Quit();
         return EXIT_FAILURE;
     }
 
-    SDL_Texture * background = SDL_CreateTextureFromSurface(renderer, tmpImage);
-    SDL_DestroySurface(tmpImage);
-    tmpImage = nullptr;
+    SDL_Texture * fontTexture = nullptr;
+    {
+        SDL_Surface * tmpImg = IMG_Load("../font_22x32.png");
+        if (tmpImg == nullptr) {
+            std::cerr << "IMG_Load failed: " << SDL_GetError() << std::endl;
+            SDL_DestroyWindow(window);
+            SDL_DestroyRenderer(renderer);
+            SDL_Quit();
+            return EXIT_FAILURE;
+        }
+        SDL_SetSurfaceColorKey(tmpImg, true, *static_cast<Uint32*>(tmpImg->pixels));
+        fontTexture = SDL_CreateTextureFromSurface(renderer, tmpImg);
+        SDL_DestroySurface(tmpImg);
+    }
+    if (fontTexture == nullptr) {
+        std::cerr << "font texture creation failed: " << SDL_GetError() << std::endl;
+        SDL_DestroyWindow(window);
+        SDL_DestroyRenderer(renderer);
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
 
-
-    SDL_RenderTexture(renderer, background, nullptr, nullptr);
+    SpriteSheet font(fontTexture, 16, 8);
 
     FrameRate fr(30);
 
@@ -79,14 +85,36 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        SDL_SetRenderDrawColor(renderer, 130, 40, 150, 128);
+        SDL_RenderClear(renderer);
 
+
+        int accumulator = 0;
+        font.draw(renderer, 'N', 50+accumulator,50,1.0f);
+        accumulator += font.getWidth();
+        font.draw(renderer, 'A', 50+accumulator,50,1.0f);
+        accumulator += font.getWidth();
+        font.draw(renderer, 'M', 50+accumulator,50,1.0f);
+        accumulator += font.getWidth();
+        font.draw(renderer, 'E', 50+accumulator,50,1.0f);
+        accumulator += font.getWidth();
+        font.draw(renderer, ' ', 50+accumulator,50,1.0f);
+        accumulator += font.getWidth();
+        font.draw(renderer, 'H', 50+accumulator,50,1.0f);
+        accumulator += font.getWidth();
+        font.draw(renderer, 'E', 50+accumulator,50,1.0f);
+        accumulator += font.getWidth();
+        font.draw(renderer, 'R', 50+accumulator,50,1.0f);
+        accumulator += font.getWidth();
+        font.draw(renderer, 'E', 50+accumulator,50,1.0f);
+        accumulator += font.getWidth();
 
 
         SDL_RenderPresent(renderer);
         fr.delay();
     }
 
-    SDL_DestroyTexture(background);
+    SDL_DestroyTexture(fontTexture);
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
     SDL_Quit();
