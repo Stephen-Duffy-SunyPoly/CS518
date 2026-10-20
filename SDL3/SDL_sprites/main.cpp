@@ -1,0 +1,94 @@
+#include <iostream>
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
+#include <SDL3_gfxPrimitives.h>
+#include "frameRate.hpp"
+
+constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
+
+static auto backgroundFile = "../backdrop.jpeg";
+
+int main(int argc, char* argv[]) {
+
+    if (!SDL_Init(initFLags)) {
+        std::cerr << "SDL initialization failed: " << SDL_GetError() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    SDL_Surface * tmpImage = IMG_Load(backgroundFile);
+
+    if (tmpImage == nullptr) {
+        std::cerr << "Failed to load image: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
+
+    int width = tmpImage->w;
+    int height = tmpImage->h;
+
+    SDL_Window * window = nullptr;
+    SDL_Renderer * renderer = nullptr;
+    if (!SDL_CreateWindowAndRenderer("SDL Image Window",width,height,SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT, &window, &renderer)) {
+        std::cerr << "SDL Window creation failed: " << SDL_GetError() << std::endl;
+        SDL_DestroySurface(tmpImage);
+        SDL_Quit();
+    }
+    if (window == nullptr) {
+        std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
+        SDL_DestroySurface(tmpImage);
+        SDL_Quit();
+        return EXIT_FAILURE;
+    }
+
+    SDL_Texture * background = SDL_CreateTextureFromSurface(renderer, tmpImage);
+    SDL_DestroySurface(tmpImage);
+    tmpImage = nullptr;
+
+
+    SDL_RenderTexture(renderer, background, nullptr, nullptr);
+
+    FrameRate fr(30);
+
+    bool shouldRun = true;
+    while (shouldRun) {
+        SDL_Event event;
+        //read all events
+        while (SDL_PollEvent(&event)) {
+            //handle the event
+            int newWidth;
+            int newHeight;
+            switch (event.type) {
+            case SDL_EVENT_QUIT:
+            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                shouldRun = false;
+                break;
+            case SDL_EVENT_WINDOW_RESIZED:
+                newWidth = event.window.data1;
+                newHeight = event.window.data2;
+                std::cout << "Resized: " << newWidth << "x" << newHeight << std::endl;
+                width = newWidth;
+                height = newHeight;
+                break;
+            case SDL_EVENT_KEY_DOWN:
+                if (event.key.key == SDLK_ESCAPE) {
+                    shouldRun = false;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+
+
+
+        SDL_RenderPresent(renderer);
+        fr.delay();
+    }
+
+    SDL_DestroyTexture(background);
+    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
+    SDL_Quit();
+    return EXIT_SUCCESS;
+}
