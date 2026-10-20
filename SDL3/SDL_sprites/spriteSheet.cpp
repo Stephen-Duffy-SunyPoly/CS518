@@ -34,3 +34,28 @@ int SpriteSheet::getHeight() const {
 SDL_Texture* SpriteSheet::getTexture() const {
     return texture;
 }
+
+Font::Font(SDL_Texture* texture): SpriteSheet(texture, 16,8){}
+int Font::textWidth(const char* text) const {
+    //TODO handle new lines
+    return  static_cast<int>(SDL_strlen(text)) * getWidth();
+}
+int Font::textHeight(const char* text) const {
+    //TODO handle new lines
+    return getHeight();
+}
+
+void Font::drawString(SDL_Renderer* renderer, const char* str, const int x, const int y) {
+    int i =0;
+    while (*str != '\0') {
+        draw(renderer, *str, x+i*getWidth(),y,1.0f);
+        str++;
+        i++;
+    }
+}
+
+void Font::drawStringCentered(SDL_Renderer* renderer, const char* str, const int x, const int y) {
+    const int stringWidth = textWidth(str);
+    const int stringHeight = textHeight(str);
+    drawString(renderer, str, x-stringWidth/2,y-stringHeight/2);
+}

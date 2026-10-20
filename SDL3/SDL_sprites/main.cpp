@@ -7,6 +7,8 @@
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
+static const char * myString = "Hi, I am Jenny the";
+
 int main(int argc, char* argv[]) {
 
     if (!SDL_Init(initFLags)) {
@@ -51,7 +53,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    SpriteSheet font(fontTexture, 16, 8);
+    Font font(fontTexture);
 
     FrameRate fr(30);
 
@@ -89,25 +91,7 @@ int main(int argc, char* argv[]) {
         SDL_RenderClear(renderer);
 
 
-        int accumulator = 0;
-        font.draw(renderer, 'N', 50+accumulator,50,1.0f);
-        accumulator += font.getWidth();
-        font.draw(renderer, 'A', 50+accumulator,50,1.0f);
-        accumulator += font.getWidth();
-        font.draw(renderer, 'M', 50+accumulator,50,1.0f);
-        accumulator += font.getWidth();
-        font.draw(renderer, 'E', 50+accumulator,50,1.0f);
-        accumulator += font.getWidth();
-        font.draw(renderer, ' ', 50+accumulator,50,1.0f);
-        accumulator += font.getWidth();
-        font.draw(renderer, 'H', 50+accumulator,50,1.0f);
-        accumulator += font.getWidth();
-        font.draw(renderer, 'E', 50+accumulator,50,1.0f);
-        accumulator += font.getWidth();
-        font.draw(renderer, 'R', 50+accumulator,50,1.0f);
-        accumulator += font.getWidth();
-        font.draw(renderer, 'E', 50+accumulator,50,1.0f);
-        accumulator += font.getWidth();
+       font.drawStringCentered(renderer, myString, 250,250);
 
 
         SDL_RenderPresent(renderer);

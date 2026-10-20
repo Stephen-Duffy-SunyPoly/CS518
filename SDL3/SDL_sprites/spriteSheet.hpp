@@ -21,4 +21,16 @@ public:
     virtual ~SpriteSheet() = default;
 };
 
+class Font: public SpriteSheet {
+    public:
+    explicit Font(SDL_Texture* texture);
+
+    int textWidth(const char* text) const;
+    int textHeight(const char* text) const;
+
+    void drawString(SDL_Renderer * renderer, const char * str, int x, int y);
+    void drawStringCentered(SDL_Renderer * renderer, const char * str, int x, int y);
+
+};
+
 #endif //SPRITES_SPRITESHEET_HPP
