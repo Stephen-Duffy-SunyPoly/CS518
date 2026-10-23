@@ -193,10 +193,14 @@ int main() {
 
     const float ground = playerPosition.y + static_cast<float>(manSprite.getHeight())*1.5f;
 
+    int score=0;
+    int highScore =0;
+
     bool should_quit = false;
     FrameRate frameRate;
     while (!should_quit) {
         SDL_Event event;
+        bool mouseClicked = false;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_EVENT_QUIT:
@@ -211,24 +215,26 @@ int main() {
                         case SDLK_SPACE:
                             if (ballPos.y+32 >= ground) {
                                 ballVelocity = {static_cast<float>(SDL_rand(30) - 15)/10.0f,-static_cast<float>(SDL_rand(270))/10.0f-12.0f};
+                                score = 0;
                             }
                             break;
                         default:
                             break;
                     }
                     break;
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                    mouseClicked = true;
+                    break;
                 default:
                     break;
             }
         }
-        // Pos mouse{};
-        // SDL_GetMouseState(&mouse.x, &mouse.y);
 
         //draw the background
         SDL_RenderTexture(renderer, background,nullptr,nullptr);
 
         SDL_FPoint mouse{};
-        Uint32 mouseButtons = SDL_GetMouseState(&mouse.x, &mouse.y);
+        SDL_GetMouseState(&mouse.x, &mouse.y);
 
         float playerMovementDistance = ((mouse.x-static_cast<float>(manSprite.getWidth())/2.0f) - playerPosition.x) *0.04f;
         float moveAmt = SDL_fabsf(playerMovementDistance);
@@ -267,18 +273,23 @@ int main() {
         if (ballPos.y > ground-32 && ballVelocity.y > 0) {
             ballVelocity.y = 0;
             ballVelocity.x *= AIR_DRAG;
+            if (score > highScore) {
+                highScore = score;
+            }
         }
+        //if hit the walls, bounce and reduce speed
         if (ballPos.x <=0 || ballPos.x >= static_cast<float>(width) - 64) {
             ballVelocity.x = -ballVelocity.x * 0.7f;
             ballPos.x += ballVelocity.x;
         }
 
+        //move the ball and apply acceleration
         ballPos += ballVelocity;
         ballVelocity.y += GRAVITY;
         ballVelocity.x *= AIR_DRAG;
 
         constexpr float hitAreaSize = 50;
-        if (mouseButtons) {
+        if (mouseClicked) {
             //get direction from the player
             SDL_FPoint ballCenter = ballPos + SDL_FPoint{32.0f,32.0f};
             SDL_FPoint playerHitPoint = playerPosition + SDL_FPoint{static_cast<float>(manSprite.getWidth())*1.5f/2.0f,40.0f};
@@ -287,7 +298,12 @@ int main() {
             if (directionDistanceSquared < hitAreaSize*hitAreaSize) {
                 float powerScale = -0.99f*(-directionDistanceSquared/(hitAreaSize*hitAreaSize) + 1.0f) + 1.3f;
                 ballVelocity = direction * powerScale;
+                ballVelocity *= 1.1f;
                 ballVelocity.y *= 0.6f;
+                //if it was hit while not on the ground, increase the score
+                if (ballPos.y < ground-32) {
+                    score++;
+                }
             }
         }
         SDL_FRect bbp{
@@ -301,6 +317,19 @@ int main() {
 
         SDL_FRect bd{ballPos.x,ballPos.y,static_cast<float>(ball->w),static_cast<float>(ball->h)};
         SDL_RenderTextureRotated(renderer, ball, nullptr,&bd,ballPos.x,nullptr,SDL_FLIP_NONE);
+
+        if (ballPos.y >= ground-32) {
+            //when the ball is on the ground
+            char scoreReport[100];
+            SDL_snprintf(scoreReport,100,"You Scored: %d",score);
+            fontLarge.drawStringCentered(renderer,scoreReport,width/2,height/2);
+        }
+        char scoreDisplay[100];
+        char highScoreDisplay[100];
+        SDL_snprintf(scoreDisplay,100,"Score: %d",score);
+        SDL_snprintf(highScoreDisplay,100,"High Score: %d",highScore);
+        fontSmall.drawString(renderer,scoreDisplay,10,10);
+        fontSmall.drawString(renderer,highScoreDisplay,10,10+fontSmall.getHeight());
 
         SDL_RenderPresent(renderer);
         frameRate.delay();
