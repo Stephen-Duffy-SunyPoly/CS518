@@ -34,7 +34,9 @@ add_custom_command(
 )
 
 #regular application stuff
-add_executable(p6_duffysd main.cpp frameRate.cpp spriteSheet.cpp ${ASSET_OUTPUT_SOURCE})
+add_executable(p6_duffysd main.cpp frameRate.cpp spriteSheet.cpp ${ASSET_OUTPUT_SOURCE}
+        initializer.cpp
+        initializer.hpp)
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC
