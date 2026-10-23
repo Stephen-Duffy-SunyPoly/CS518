@@ -186,7 +186,7 @@ int main() {
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    SDL_FPoint playerPosition{300.0f,545.0f};
+    SDL_FPoint playerPosition{300.0f,645.0f};
     SDL_FPoint ballPos{300.0f,200.0f};
     SDL_FPoint ballVelocity{0,3};
     int playerMovementAnimationFrame = 0;
@@ -209,7 +209,9 @@ int main() {
                             should_quit = true;
                             break;
                         case SDLK_SPACE:
-                            ballVelocity = {static_cast<float>(SDL_rand(30) - 15)/10.0f,-static_cast<float>(SDL_rand(300))/10.0f-10.0f};
+                            if (ballPos.y+32 >= ground) {
+                                ballVelocity = {static_cast<float>(SDL_rand(30) - 15)/10.0f,-static_cast<float>(SDL_rand(270))/10.0f-12.0f};
+                            }
                             break;
                         default:
                             break;
@@ -228,12 +230,12 @@ int main() {
         SDL_FPoint mouse{};
         Uint32 mouseButtons = SDL_GetMouseState(&mouse.x, &mouse.y);
 
-        float playerMovementDistance = ((mouse.x-static_cast<float>(manSprite.getWidth())/2.0f) - playerPosition.x) *0.03f;
+        float playerMovementDistance = ((mouse.x-static_cast<float>(manSprite.getWidth())/2.0f) - playerPosition.x) *0.04f;
         float moveAmt = SDL_fabsf(playerMovementDistance);
         int animationSet = 0;
         if (moveAmt > 1.1) {
             int direction = (playerMovementDistance > 0) ? 1:-1;
-            if (moveAmt > 3.5) {
+            if (moveAmt > 3.8) {
                 //running speed
                 if (direction == 1) {
                     animationSet = PLAYER_ANIMATION_SET_RUN_RIGHT;
@@ -264,6 +266,7 @@ int main() {
         //if it hit the ground, remove its speed
         if (ballPos.y > ground-32 && ballVelocity.y > 0) {
             ballVelocity.y = 0;
+            ballVelocity.x *= AIR_DRAG;
         }
         if (ballPos.x <=0 || ballPos.x >= static_cast<float>(width) - 64) {
             ballVelocity.x = -ballVelocity.x * 0.7f;
@@ -274,11 +277,11 @@ int main() {
         ballVelocity.y += GRAVITY;
         ballVelocity.x *= AIR_DRAG;
 
-        constexpr float hitAreaSize = 70;
+        constexpr float hitAreaSize = 50;
         if (mouseButtons) {
             //get direction from the player
             SDL_FPoint ballCenter = ballPos + SDL_FPoint{32.0f,32.0f};
-            SDL_FPoint playerHitPoint = playerPosition + SDL_FPoint{static_cast<float>(manSprite.getWidth())*1.5f/2.0f,30.0f};
+            SDL_FPoint playerHitPoint = playerPosition + SDL_FPoint{static_cast<float>(manSprite.getWidth())*1.5f/2.0f,40.0f};
             SDL_FPoint direction = ballCenter - playerHitPoint;
             float directionDistanceSquared = *direction;
             if (directionDistanceSquared < hitAreaSize*hitAreaSize) {
@@ -288,12 +291,12 @@ int main() {
             }
         }
         SDL_FRect bbp{
-            .x = static_cast<float>(manSprite.getWidth())*1.5f/2.0f-hitAreaSize/2.0f + playerPosition.x,
-            .y = 30.0f-hitAreaSize/2.0f + playerPosition.y,
-            .w = hitAreaSize,
-            .h = hitAreaSize
+            .x = static_cast<float>(manSprite.getWidth())*1.5f/2.0f-hitAreaSize + playerPosition.x,
+            .y = 40.0f-hitAreaSize + playerPosition.y,
+            .w = hitAreaSize*2,
+            .h = hitAreaSize*2
         };
-        SDL_SetRenderDrawColor(renderer,0,0,0,255);
+        SDL_SetRenderDrawColor(renderer,0,0,0,60);
         SDL_RenderFillRect(renderer,&bbp);
 
         SDL_FRect bd{ballPos.x,ballPos.y,static_cast<float>(ball->w),static_cast<float>(ball->h)};
