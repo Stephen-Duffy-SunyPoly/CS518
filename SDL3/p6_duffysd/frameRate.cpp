@@ -18,6 +18,10 @@ unsigned int FrameRate::getFPS() {
     return fps_;
 }
 
+Uint64 FrameRate::getFrameCount() {
+    return frameCount_;
+}
+
 void FrameRate::delay() {
     if (fps_ == 0) {
         return;
@@ -28,4 +32,5 @@ void FrameRate::delay() {
         SDL_DelayPrecise(toDelay);
     }
     start_ += frameNanoSeconds_;
+    frameCount_ ++;
 }

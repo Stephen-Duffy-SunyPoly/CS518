@@ -14,10 +14,14 @@ SDL_FRect SpriteSheet::operator[](const int index) const {
     };
 }
 void SpriteSheet::draw(SDL_Renderer* renderer, const int index, const int x, const int y, const float scale) {
+    draw(renderer, index, {static_cast<float>(x),static_cast<float>(y)},scale);
+}
+
+void SpriteSheet::draw(SDL_Renderer *renderer, int index, SDL_FPoint pos, float scale) {
     const SDL_FRect src = this->operator[](index);
     const SDL_FRect dst = {
-        .x = static_cast<float>(x),
-        .y = static_cast<float>(y),
+        .x = pos.x,
+        .y = pos.y,
         .w = static_cast<float>(sprite_width)*scale,
         .h = static_cast<float>(sprite_height)*scale
     };

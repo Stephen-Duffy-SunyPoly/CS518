@@ -5,6 +5,49 @@
 #include "spriteSheet.hpp"
 
 
+static SDL_FPoint operator+(const SDL_FPoint & a, const SDL_FPoint & b) {
+    SDL_FPoint result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    return result;
+}
+
+static SDL_FPoint &operator+=(SDL_FPoint & a, const SDL_FPoint & b) {
+    a.x += b.x;
+    a.y += b.y;
+    return a;
+}
+
+static SDL_FPoint operator-(const SDL_FPoint & a, const SDL_FPoint & b) {
+    SDL_FPoint result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    return result;
+}
+
+static SDL_FPoint &operator*=(SDL_FPoint & a, const float b) {
+    a.x *= b;
+    a.y *= b;
+    return a;
+}
+
+static SDL_FPoint operator*(const SDL_FPoint & a, const float b) {
+    SDL_FPoint result;
+    result.x = a.x * b;
+    result.y = a.y * b;
+    return result;
+}
+
+static float operator*(const SDL_FPoint &a) {
+    return a.x*a.x + a.y*a.y;
+}
+
+constexpr int PLAYER_ANIMATION_SET_STANDING = 0;
+constexpr int PLAYER_ANIMATION_SET_RUN_LEFT = 12;
+constexpr int PLAYER_ANIMATION_SET_RUN_RIGHT = 24;
+constexpr float GRAVITY = 0.75f;
+constexpr float AIR_DRAG = 0.95f;
+
 int main() {
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
@@ -16,6 +59,8 @@ int main() {
 
     SDL_Window * window;
     SDL_Renderer * renderer;
+    const int width = backgroundSurface->w;
+    const int height = backgroundSurface->h;
 
     if (!SDL_CreateWindowAndRenderer("p6_duffysd",backgroundSurface->w,backgroundSurface->h,0,&window, &renderer)) {
         SDL_Log("Unable to create window: %s", SDL_GetError());
@@ -139,10 +184,14 @@ int main() {
     SpriteSheet manSprite(manSpriteSheetTexture,12,3);
     SDL_SetTextureScaleMode(manSpriteSheetTexture, SDL_SCALEMODE_NEAREST);
 
-
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    int cnt = 0;
+    SDL_FPoint playerPosition{300.0f,545.0f};
+    SDL_FPoint ballPos{300.0f,200.0f};
+    SDL_FPoint ballVelocity{0,3};
+    int playerMovementAnimationFrame = 0;
+
+    const float ground = playerPosition.y + static_cast<float>(manSprite.getHeight())*1.5f;
 
     bool should_quit = false;
     FrameRate frameRate;
@@ -159,6 +208,9 @@ int main() {
                         case SDLK_ESCAPE:
                             should_quit = true;
                             break;
+                        case SDLK_SPACE:
+                            ballVelocity = {static_cast<float>(SDL_rand(30) - 15)/10.0f,-static_cast<float>(SDL_rand(300))/10.0f-10.0f};
+                            break;
                         default:
                             break;
                     }
@@ -173,20 +225,83 @@ int main() {
         //draw the background
         SDL_RenderTexture(renderer, background,nullptr,nullptr);
 
-        fontLarge.drawString(renderer,"Large test", 10, 10);
-        fontSmall.drawString(renderer,"Small test", 10, 50);
+        SDL_FPoint mouse{};
+        Uint32 mouseButtons = SDL_GetMouseState(&mouse.x, &mouse.y);
 
-        manSprite.draw(renderer,cnt,150,150,1.5f);
+        float playerMovementDistance = ((mouse.x-static_cast<float>(manSprite.getWidth())/2.0f) - playerPosition.x) *0.03f;
+        float moveAmt = SDL_fabsf(playerMovementDistance);
+        int animationSet = 0;
+        if (moveAmt > 1.1) {
+            int direction = (playerMovementDistance > 0) ? 1:-1;
+            if (moveAmt > 3.5) {
+                //running speed
+                if (direction == 1) {
+                    animationSet = PLAYER_ANIMATION_SET_RUN_RIGHT;
+                } else {
+                    animationSet = PLAYER_ANIMATION_SET_RUN_LEFT;
+                }
+                playerMovementAnimationFrame += direction;
+            } else {
+                animationSet = PLAYER_ANIMATION_SET_STANDING;
+                //standing but animating speed
+                if (frameRate.getFrameCount()%2 == 0) {
+                    playerMovementAnimationFrame += direction;
+                }
+            }
 
-        SDL_FRect bd{
-            200,200,(float)ball->w,(float)ball->h
+            playerMovementAnimationFrame %= 12;
+            if (playerMovementAnimationFrame < 0) {
+                playerMovementAnimationFrame += 12;
+            }
+        }else {
+            animationSet = PLAYER_ANIMATION_SET_STANDING;
+            playerMovementAnimationFrame = 0;
+        }
+        playerPosition.x += playerMovementDistance;
+        manSprite.draw(renderer,animationSet + playerMovementAnimationFrame,playerPosition,1.5f);
+
+        //ball physics
+        //if it hit the ground, remove its speed
+        if (ballPos.y > ground-32 && ballVelocity.y > 0) {
+            ballVelocity.y = 0;
+        }
+        if (ballPos.x <=0 || ballPos.x >= static_cast<float>(width) - 64) {
+            ballVelocity.x = -ballVelocity.x * 0.7f;
+            ballPos.x += ballVelocity.x;
+        }
+
+        ballPos += ballVelocity;
+        ballVelocity.y += GRAVITY;
+        ballVelocity.x *= AIR_DRAG;
+
+        constexpr float hitAreaSize = 70;
+        if (mouseButtons) {
+            //get direction from the player
+            SDL_FPoint ballCenter = ballPos + SDL_FPoint{32.0f,32.0f};
+            SDL_FPoint playerHitPoint = playerPosition + SDL_FPoint{static_cast<float>(manSprite.getWidth())*1.5f/2.0f,30.0f};
+            SDL_FPoint direction = ballCenter - playerHitPoint;
+            float directionDistanceSquared = *direction;
+            if (directionDistanceSquared < hitAreaSize*hitAreaSize) {
+                float powerScale = -0.99f*(-directionDistanceSquared/(hitAreaSize*hitAreaSize) + 1.0f) + 1.3f;
+                ballVelocity = direction * powerScale;
+                ballVelocity.y *= 0.6f;
+            }
+        }
+        SDL_FRect bbp{
+            .x = static_cast<float>(manSprite.getWidth())*1.5f/2.0f-hitAreaSize/2.0f + playerPosition.x,
+            .y = 30.0f-hitAreaSize/2.0f + playerPosition.y,
+            .w = hitAreaSize,
+            .h = hitAreaSize
         };
-        SDL_RenderTextureRotated(renderer, ball, nullptr,&bd,15,nullptr,SDL_FLIP_NONE);
+        SDL_SetRenderDrawColor(renderer,0,0,0,255);
+        SDL_RenderFillRect(renderer,&bbp);
+
+        SDL_FRect bd{ballPos.x,ballPos.y,static_cast<float>(ball->w),static_cast<float>(ball->h)};
+        SDL_RenderTextureRotated(renderer, ball, nullptr,&bd,ballPos.x,nullptr,SDL_FLIP_NONE);
 
         SDL_RenderPresent(renderer);
         frameRate.delay();
-        cnt++;
-        cnt %= 12*3;
+
     }
 
 

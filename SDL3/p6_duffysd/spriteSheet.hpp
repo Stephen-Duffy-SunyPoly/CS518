@@ -13,6 +13,7 @@ public:
 
     SDL_FRect operator[](int index) const;
     virtual void draw(SDL_Renderer* renderer, int index, int x, int y, float scale);
+    virtual void draw(SDL_Renderer* renderer, int index, SDL_FPoint pos, float scale);
 
     [[nodiscard]] int getWidth() const;
     [[nodiscard]] int getHeight() const;
