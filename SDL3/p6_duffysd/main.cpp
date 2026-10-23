@@ -214,7 +214,7 @@ int main() {
                             break;
                         case SDLK_SPACE:
                             if (ballPos.y+32 >= ground) {
-                                ballVelocity = {static_cast<float>(SDL_rand(30) - 15)/10.0f,-static_cast<float>(SDL_rand(270))/10.0f-12.0f};
+                                ballVelocity = {static_cast<float>(SDL_rand(30) - 15)/2.f,-static_cast<float>(SDL_rand(170))/10.0f-12.0f};
                                 score = 0;
                             }
                             break;
@@ -239,7 +239,7 @@ int main() {
         float playerMovementDistance = ((mouse.x-static_cast<float>(manSprite.getWidth())/2.0f) - playerPosition.x) *0.04f;
         float moveAmt = SDL_fabsf(playerMovementDistance);
         int animationSet = 0;
-        if (moveAmt > 1.1) {
+        if (moveAmt > 1.05) {
             int direction = (playerMovementDistance > 0) ? 1:-1;
             if (moveAmt > 3.8) {
                 //running speed
@@ -288,7 +288,7 @@ int main() {
         ballVelocity.y += GRAVITY;
         ballVelocity.x *= AIR_DRAG;
 
-        constexpr float hitAreaSize = 50;
+        constexpr float hitAreaSize = 55;
         if (mouseClicked) {
             //get direction from the player
             SDL_FPoint ballCenter = ballPos + SDL_FPoint{32.0f,32.0f};
