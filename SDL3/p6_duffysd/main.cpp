@@ -198,14 +198,14 @@ int main() {
                 }
             }
         }
-        SDL_FRect bbp{
-            .x = static_cast<float>(manSprite.getWidth())*1.5f/2.0f-hitAreaSize + playerPosition.x,
-            .y = 40.0f-hitAreaSize + playerPosition.y,
-            .w = hitAreaSize*2,
-            .h = hitAreaSize*2
-        };
-        SDL_SetRenderDrawColor(renderer,0,0,0,60);
-        SDL_RenderFillRect(renderer,&bbp);
+        // SDL_FRect bbp{
+        //     .x = static_cast<float>(manSprite.getWidth())*1.5f/2.0f-hitAreaSize + playerPosition.x,
+        //     .y = 40.0f-hitAreaSize + playerPosition.y,
+        //     .w = hitAreaSize*2,
+        //     .h = hitAreaSize*2
+        // };
+        // SDL_SetRenderDrawColor(renderer,0,0,0,60);
+        // SDL_RenderFillRect(renderer,&bbp);
 
         SDL_FRect bd{ballPos.x,ballPos.y,static_cast<float>(ball->w),static_cast<float>(ball->h)};
         SDL_RenderTextureRotated(renderer, ball, nullptr,&bd,ballPos.x,nullptr,SDL_FLIP_NONE);
