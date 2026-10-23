@@ -3,6 +3,7 @@
 #include <assets.h>
 #include "frameRate.hpp"
 #include "spriteSheet.hpp"
+#include "initializer.hpp"
 
 
 static SDL_FPoint operator+(const SDL_FPoint & a, const SDL_FPoint & b) {
@@ -49,138 +50,29 @@ constexpr float GRAVITY = 0.75f;
 constexpr float AIR_DRAG = 0.95f;
 
 int main() {
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-        return 1;
-    }
+    Initializer init(SDL_INIT_VIDEO);
 
-    SDL_IOStream * backgroundIoStream = SDL_IOFromConstMem(background_png_data, background_png_size);
-    SDL_Surface * backgroundSurface = IMG_Load_IO(backgroundIoStream,true);
-
-    SDL_Window * window;
-    SDL_Renderer * renderer;
-    const int width = backgroundSurface->w;
-    const int height = backgroundSurface->h;
-
-    if (!SDL_CreateWindowAndRenderer("p6_duffysd",backgroundSurface->w,backgroundSurface->h,0,&window, &renderer)) {
-        SDL_Log("Unable to create window: %s", SDL_GetError());
-        SDL_DestroySurface(backgroundSurface);
-        return 1;
-    }
-    SDL_Texture * background = SDL_CreateTextureFromSurface(renderer, backgroundSurface);
-    SDL_DestroySurface(backgroundSurface);
-
+    SDL_Window * window = nullptr;
+    SDL_Renderer * renderer = nullptr;
+    SDL_Texture * background = nullptr;
     SDL_Texture * ball = nullptr;
-    {
-        SDL_IOStream * memoryIoStream = SDL_IOFromConstMem(ball_bmp_data, ball_bmp_size);
-        SDL_Surface * tmpImg = IMG_Load_IO(memoryIoStream,true);
-        if (tmpImg == nullptr) {
-            SDL_Log("Unable to load image %s", SDL_GetError());
-            SDL_DestroyTexture(background);
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            return 1;
-        }
-        ball = SDL_CreateTextureFromSurface(renderer, tmpImg);
-        SDL_DestroySurface(tmpImg);
-    }
-    if (ball == nullptr) {
-        SDL_Log("Unable to create texture from %s", SDL_GetError());
-        SDL_DestroyTexture(background);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-
     SDL_Texture * fontSmallTexture = nullptr;
-    {
-        SDL_IOStream * memoryIoStream = SDL_IOFromConstMem(font_11x16_png_data, font_11x16_png_size);
-        SDL_Surface * tmpImg = IMG_Load_IO(memoryIoStream,true);
-        if (tmpImg == nullptr) {
-            SDL_Log("Unable to load image %s", SDL_GetError());
-            SDL_DestroyTexture(ball);
-            SDL_DestroyTexture(background);
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            return 1;
-        }
-        SDL_SetSurfaceColorKey(tmpImg,true, *static_cast<Uint32 *>(tmpImg->pixels));
-        fontSmallTexture = SDL_CreateTextureFromSurface(renderer, tmpImg);
-        SDL_DestroySurface(tmpImg);
-    }
-    if (fontSmallTexture == nullptr) {
-        SDL_Log("Unable to create texture from %s", SDL_GetError());
-        SDL_DestroyTexture(ball);
-        SDL_DestroyTexture(background);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-    Font fontSmall(fontSmallTexture);
-
     SDL_Texture * fontLargeTexture = nullptr;
-    {
-        SDL_IOStream * memoryIoStream = SDL_IOFromConstMem(font_22x32_png_data, font_22x32_png_size);
-        SDL_Surface * tmpImg = IMG_Load_IO(memoryIoStream,true);
-        if (tmpImg == nullptr) {
-            SDL_Log("Unable to load image %s", SDL_GetError());
-            SDL_DestroyTexture(fontSmallTexture);
-            SDL_DestroyTexture(ball);
-            SDL_DestroyTexture(background);
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            return 1;
-        }
-        SDL_SetSurfaceColorKey(tmpImg,true, *static_cast<Uint32 *>(tmpImg->pixels));
-        fontLargeTexture = SDL_CreateTextureFromSurface(renderer, tmpImg);
-        SDL_DestroySurface(tmpImg);
-    }
-    if (fontLargeTexture == nullptr) {
-        SDL_Log("Unable to create texture from %s", SDL_GetError());
-        SDL_DestroyTexture(fontSmallTexture);
-        SDL_DestroyTexture(ball);
-        SDL_DestroyTexture(background);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
-    Font fontLarge(fontLargeTexture);
-
     SDL_Texture * manSpriteSheetTexture = nullptr;
-    {
-        SDL_IOStream * memoryIoStream = SDL_IOFromConstMem(mann_png_data, mann_png_size);
-        SDL_Surface * tmpImg = IMG_Load_IO(memoryIoStream,true);
-        if (tmpImg == nullptr) {
-            SDL_Log("Unable to load image %s", SDL_GetError());
-            SDL_DestroyTexture(fontLargeTexture);
-            SDL_DestroyTexture(fontSmallTexture);
-            SDL_DestroyTexture(ball);
-            SDL_DestroyTexture(background);
-            SDL_DestroyRenderer(renderer);
-            SDL_DestroyWindow(window);
-            SDL_Quit();
-            return 1;
-        }
-        manSpriteSheetTexture = SDL_CreateTextureFromSurface(renderer, tmpImg);
-        SDL_DestroySurface(tmpImg);
-    }
-    if (manSpriteSheetTexture == nullptr) {
-        SDL_Log("Unable to create texture from %s", SDL_GetError());
-        SDL_DestroyTexture(fontLargeTexture);
-        SDL_DestroyTexture(fontSmallTexture);
-        SDL_DestroyTexture(ball);
-        SDL_DestroyTexture(background);
-        SDL_DestroyRenderer(renderer);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
+
+    init.addWindowSizeOfTexture("p6_duffysd",0, &window, &renderer,background_png_data, background_png_size, &background)
+    .addTexture(ball_bmp_data, ball_bmp_size, &ball)
+    .addTexture(font_11x16_png_data, font_11x16_png_size, &fontSmallTexture,true)
+    .addTexture(font_22x32_png_data, font_22x32_png_size, &fontLargeTexture,true)
+    .addTexture(mann_png_data, mann_png_size, &manSpriteSheetTexture);
+
+
+    const int width = init.getWindowWidth();
+    const int height = init.getWindowHeight();
+
+
+    Font fontSmall(fontSmallTexture);
+    Font fontLarge(fontLargeTexture);
     SpriteSheet manSprite(manSpriteSheetTexture,12,3);
     SDL_SetTextureScaleMode(manSpriteSheetTexture, SDL_SCALEMODE_NEAREST);
 
@@ -341,14 +233,6 @@ int main() {
 
 
     //clean up zone
-
-    SDL_DestroyTexture(manSpriteSheetTexture);
-    SDL_DestroyTexture(fontLargeTexture);
-    SDL_DestroyTexture(fontSmallTexture);
-    SDL_DestroyTexture(ball);
-    SDL_DestroyTexture(background);
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    //no longer necessary! This functionality is handled automatically but the destructor of the initializer
     return 0;
 }
