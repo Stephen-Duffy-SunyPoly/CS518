@@ -44,7 +44,7 @@ int Font::textWidth(const char* text) const {
     //TODO handle new lines
     return  static_cast<int>(SDL_strlen(text)) * getWidth();
 }
-int Font::textHeight(const char* text) const {
+int Font::textHeight([[maybe_unused]] const char* text) const {
     //TODO handle new lines
     return getHeight();
 }
