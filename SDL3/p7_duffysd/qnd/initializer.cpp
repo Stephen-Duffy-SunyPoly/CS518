@@ -9,36 +9,12 @@ void qnd::Initializer::cleanup() {
         throw InitializeException();
     }
     cleanedUp = true;
-    for (Uint32 i=0;i<numberOfTextures;i++) {
+    for (Uint32 i=0;i<createdTextures.size();i++) {
         SDL_DestroyTexture(createdTextures[i]);
     }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-}
-
-void qnd::Initializer::allocateMoreSpace() {
-    if (allocatedTextures == 0) {
-        //initial allocation
-        createdTextures = new SDL_Texture*[5];
-        allocatedTextures = 5;
-    } else {
-        //make it bigger
-        SDL_Texture ** biggerArray = new SDL_Texture*[allocatedTextures*2];
-        //copy the content of the old one to the new one
-        SDL_memcpy(biggerArray,createdTextures, allocatedTextures*sizeof(SDL_Texture*));
-        delete [] createdTextures;
-        createdTextures = biggerArray;
-        allocatedTextures *= 2;
-    }
-}
-
-void qnd::Initializer::addTextureToList(SDL_Texture *texture) {
-    if (numberOfTextures >= allocatedTextures) {
-        allocateMoreSpace();
-    }
-    createdTextures[numberOfTextures] = texture;
-    ++numberOfTextures;
 }
 
 qnd::Initializer::Initializer(SDL_InitFlags flags) {
@@ -118,7 +94,7 @@ qnd::Initializer & qnd::Initializer::addWindowSizeOfTexture(const char *title, c
     }
     SDL_DestroySurface(imgSurface);
     //now to add it to the list of textures we know  about
-    addTextureToList(texture);
+    createdTextures.add(texture);
     if (textureOut != nullptr) {
         *textureOut = texture;
     }
@@ -155,7 +131,7 @@ qnd::Initializer & qnd::Initializer::addTexture(const Uint8 *data, const Uint64 
     }
     SDL_DestroySurface(imgSurface);
     //now to add it to the list of textures we know  about
-    addTextureToList(texture);
+    createdTextures.add(texture);
     if (textureOut != nullptr) {
         *textureOut = texture;
     }
@@ -173,8 +149,5 @@ int qnd::Initializer::getWindowHeight() const {
 qnd::Initializer::~Initializer() {
     if (!cleanedUp) {
         cleanup();
-    }
-    if (createdTextures != nullptr) {
-        delete[] createdTextures;
     }
 }

@@ -4,6 +4,7 @@
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_render.h>
+#include "list.hpp"
 
 namespace qnd {
   class Initializer {
@@ -11,15 +12,12 @@ namespace qnd {
     bool hasWindow = false;
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
-    SDL_Texture ** createdTextures = nullptr;
-    Uint32 numberOfTextures = 0;
-    Uint32 allocatedTextures = 0;
+    List<SDL_Texture *> createdTextures;
+
     int windowsWidth = 0;
     int windowsHeight = 0;
 
-    void cleanup();
-    void allocateMoreSpace();
-    void addTextureToList(SDL_Texture *texture);
+    void cleanup();;
 
   public:
     explicit Initializer(SDL_InitFlags flags);

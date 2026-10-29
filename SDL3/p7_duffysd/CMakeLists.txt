@@ -37,7 +37,6 @@ add_custom_command(
 add_executable(p7_duffysd main.cpp qnd/frameRate.cpp qnd/spriteSheet.cpp ${ASSET_OUTPUT_SOURCE}
         qnd/initializer.cpp
         qnd/initializer.hpp
-        qnd/list.cpp
         qnd/list.hpp)
 
 if (MSVC)
