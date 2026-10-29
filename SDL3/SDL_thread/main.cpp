@@ -9,9 +9,17 @@ constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
 char myString[] = "my text";
 
+struct ThreadData {
+    bool * shouldRun;
+    int id;
+};
+
 int SDLCALL myThread([[maybe_unused]] void * data) {
-    for (int i=0;i<20;i++) {
-        std::cout << i << std::endl;
+    ThreadData threadData = *static_cast<ThreadData*>(data);
+    int i=0;
+    while (*threadData.shouldRun) {
+        std::cout << threadData.id << " " << i << std::endl;
+        i++;
     }
     return 0;
 }
@@ -63,14 +71,20 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
 
     Font font(fontTexture);
 
-    SDL_Thread * thread = SDL_CreateThread(myThread, "an SDL thread", nullptr);
-    if (thread == nullptr) {
-        std::cerr << "SDL thread creation failed: " << SDL_GetError() << std::endl;
+    bool shouldRun = true;
+
+    SDL_Thread * thread[10];
+    ThreadData td[10];
+    for (int i=0;i<10;i++) {
+        td[i] = {&shouldRun,i};
+        thread[i] = SDL_CreateThread(myThread, "an SDL thread", &td[i]);
+        if (thread[i] == nullptr) {
+            std::cerr << "SDL thread creation failed: " << SDL_GetError() << std::endl;
+        }
     }
 
     FrameRate fr(30);
 
-    bool shouldRun = true;
     while (shouldRun) {
         SDL_Event event;
         //read all events
@@ -113,7 +127,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
         fr.delay();
     }
 
-    SDL_WaitThread(thread, nullptr);
+    for (auto & i : thread) {
+        SDL_WaitThread(i, nullptr);
+    }
     SDL_DestroyTexture(fontTexture);
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
