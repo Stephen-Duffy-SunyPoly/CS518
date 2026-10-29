@@ -50,7 +50,7 @@ constexpr float GRAVITY = 0.75f;
 constexpr float AIR_DRAG = 0.95f;
 
 int main() {
-    Initializer init(SDL_INIT_VIDEO);
+    qnd::Initializer init(SDL_INIT_VIDEO);
 
     SDL_Window * window = nullptr;
     SDL_Renderer * renderer = nullptr;
@@ -71,9 +71,9 @@ int main() {
     const int height = init.getWindowHeight();
 
 
-    Font fontSmall(fontSmallTexture);
-    Font fontLarge(fontLargeTexture);
-    SpriteSheet manSprite(manSpriteSheetTexture,12,3);
+    qnd::Font fontSmall(fontSmallTexture);
+    qnd::Font fontLarge(fontLargeTexture);
+    qnd::SpriteSheet manSprite(manSpriteSheetTexture,12,3);
     SDL_SetTextureScaleMode(manSpriteSheetTexture, SDL_SCALEMODE_NEAREST);
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
@@ -89,7 +89,7 @@ int main() {
     int highScore =0;
 
     bool should_quit = false;
-    FrameRate frameRate;
+    qnd::FrameRate frameRate;
     while (!should_quit) {
         SDL_Event event;
         bool mouseClicked = false;

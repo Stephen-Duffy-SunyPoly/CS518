@@ -36,7 +36,9 @@ add_custom_command(
 #regular application stuff
 add_executable(p7_duffysd main.cpp qnd/frameRate.cpp qnd/spriteSheet.cpp ${ASSET_OUTPUT_SOURCE}
         qnd/initializer.cpp
-        qnd/initializer.hpp)
+        qnd/initializer.hpp
+        qnd/list.cpp
+        qnd/list.hpp)
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC
