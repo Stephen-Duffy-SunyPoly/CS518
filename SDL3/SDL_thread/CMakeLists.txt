@@ -1,0 +1,56 @@
+cmake_minimum_required(VERSION 3.22)
+project(SDL_sprites CXX C)
+
+set(CMAKE_CXX_STANDARD 20)
+
+include(FetchContent)
+
+find_package(SDL3 CONFIG QUIET)
+find_package(SDL3_image CONFIG REQUIRED)
+
+
+if(NOT SDL3_FOUND)
+    message("SDL3 not found installed on the system, downloading...")
+    set(SDL_TESTS OFF CACHE BOOL "Disable SDL test suite" FORCE)
+    # screw all that complicated install and command line args stuf, this is way easier
+    FetchContent_Declare(
+            SDL3
+            GIT_REPOSITORY https://github.com/libsdl-org/SDL
+            GIT_TAG release-3.4.14
+    )
+
+    FetchContent_MakeAvailable(SDL3)
+endif ()
+
+# my SDL install does not have this apparently, so this is necessary for GFX to work
+if (NOT SDL3_LIB)
+    set(SDL3_LIB SDL3::SDL3)
+endif ()
+
+FetchContent_Declare(
+        SDL3_GFX
+        GIT_REPOSITORY https://github.com/sabdul-khabir/SDL3_gfx
+        GIT_TAG v1.0.1
+)
+
+
+FetchContent_MakeAvailable(SDL3_GFX)
+
+add_executable(SDL_sprites main.cpp
+        frameRate.cpp
+        frameRate.hpp
+        spriteSheet.cpp
+        spriteSheet.hpp)
+
+if (MSVC)
+    # /W4 is the second-highest warning level for MSVC, catching most bugs without noise.
+    target_compile_options(SDL_sprites PRIVATE /W4)
+else()
+    # all other non Microsoft compilers
+    target_compile_options(SDL_sprites PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+target_include_directories(SDL_sprites PRIVATE ${sdl3_gfx_SOURCE_DIR})
+#manually specifying this is also necessary for some reason
+target_link_libraries(SDL3_gfx_Static PRIVATE SDL3::SDL3)
+target_link_libraries(SDL_sprites PRIVATE SDL3::SDL3 SDL3_image::SDL3_image SDL3_gfx_Static)
