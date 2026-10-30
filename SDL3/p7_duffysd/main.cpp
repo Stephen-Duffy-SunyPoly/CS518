@@ -70,6 +70,8 @@ int main() {
     SDL_Texture * fontSmallTexture = nullptr;
     SDL_Texture * fontLargeTexture = nullptr;
 
+    SDL_Texture * racers[4];
+
     Uint8 * testWavData = nullptr;
     Uint32 wavDataSize =0;
     SDL_AudioSpec wavDataSpec;
@@ -84,6 +86,10 @@ int main() {
     .addDefaultAudioPlaybackDevice(&audioDevice)
     .addAudioStream(&wavDataSpec, nullptr, &audioStream)
     .addMutex(&raceFinishedMutex)
+    .addTexture(racer1_png_data,racer1_png_size, &racers[0])
+    .addTexture(racer2_png_data,racer2_png_size, &racers[1])
+    .addTexture(racer3_png_data,racer3_png_size, &racers[2])
+    .addTexture(racer4_png_data,racer4_png_size, &racers[3])
     ;
 
     // const int width = init.getWindowWidth();
@@ -144,13 +150,13 @@ int main() {
             SDL_FRect spritePos{
                 .x = easingFunctions[easingIndices[i]](racerProgress[i]) * trackWidth+152,
                 .y = racerYs[i],
-                .w = 50,
-                .h = 50,
+                .w = 80,
+                .h = 80,
             };
             spritePos.x -= spritePos.w;
 
             SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
-            SDL_RenderFillRect(renderer, &spritePos);
+            SDL_RenderTexture(renderer, racers[i], nullptr, &spritePos);
         }
 
 
