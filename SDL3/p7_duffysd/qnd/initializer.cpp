@@ -16,6 +16,9 @@ void qnd::Initializer::cleanup() {
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
     }
+    for (int i=0;i<audioStreams.size();i++) {
+        SDL_DestroyAudioStream(audioStreams[i]);
+    }
     for (int i=0;i<audioBuffers.size();i++) {
         SDL_free(audioBuffers[i]);
     }
@@ -146,9 +149,8 @@ qnd::Initializer & qnd::Initializer::addTexture(const Uint8 *data, const Uint64 
     return *this;
 }
 
-qnd::Initializer& qnd::Initializer::addWavAudio(const Uint8* data, const Uint64 dataSize, Uint8** audioDataOut,
-    Uint32 * audioLengthOut) {
-    SDL_AudioSpec audioSpec;//may also have to return this
+qnd::Initializer& qnd::Initializer::addWavAudio(const Uint8* data, const Uint64 dataSize, Uint8** audioDataOut, Uint32 * audioLengthOut, SDL_AudioSpec * audioSpecOut) {
+    SDL_AudioSpec audioSpec;
     Uint8 * audiodata;
     Uint32 audiodataLength;
 
@@ -169,6 +171,9 @@ qnd::Initializer& qnd::Initializer::addWavAudio(const Uint8* data, const Uint64 
     }
     if (audioLengthOut != nullptr) {
         *audioLengthOut = audiodataLength;
+    }
+    if (audioSpecOut != nullptr) {
+        *audioSpecOut = audioSpec;
     }
     return *this;
 }
@@ -197,6 +202,20 @@ qnd::Initializer& qnd::Initializer::addDefaultAudioRecordingDevice(SDL_AudioDevi
     audioDevices.add(device);
     if (audioDeviceOut != nullptr) {
         *audioDeviceOut = device;
+    }
+    return *this;
+}
+
+qnd::Initializer& qnd::Initializer::addAudioStream(const SDL_AudioSpec* srcSpec, const SDL_AudioSpec* dstSpec, SDL_AudioStream** streamOut) {
+    SDL_AudioStream * stream = SDL_CreateAudioStream(srcSpec,dstSpec);
+    if (stream == nullptr) {
+        SDL_Log("Failed to create audio stream: %s",SDL_GetError());
+        cleanup();
+        throw InitializeException();
+    }
+    audioStreams.add(stream);
+    if (streamOut != nullptr) {
+        *streamOut = stream;
     }
     return *this;
 }
