@@ -13,6 +13,7 @@ namespace qnd {
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
     List<SDL_Texture *> createdTextures;
+    List<Uint8*> audioBuffers;
 
     int windowsWidth = 0;
     int windowsHeight = 0;
@@ -25,6 +26,7 @@ namespace qnd {
     Initializer & addWindow(const char *title, int width, int height,SDL_WindowFlags window_flags, SDL_Window **windowOut, SDL_Renderer **rendererOut);
     Initializer & addWindowSizeOfTexture(const char *title, SDL_WindowFlags window_flags, SDL_Window **windowOut, SDL_Renderer **rendererOut, const Uint8 * imageData, Uint64 imageDataSize, SDL_Texture ** textureOut);
     Initializer & addTexture(const Uint8 * data, Uint64 dataSize, SDL_Texture ** textureOut, bool useColorKey = false);
+    Initializer & addWavAudio(const Uint8 * data, Uint64 dataSize, Uint8 ** audioDataOut, Uint32 * audioLengthOut);
 
     [[nodiscard]] int getWindowWidth() const;
     [[nodiscard]] int getWindowHeight() const;

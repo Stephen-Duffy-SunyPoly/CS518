@@ -12,8 +12,13 @@ void qnd::Initializer::cleanup() {
     for (Uint32 i=0;i<createdTextures.size();i++) {
         SDL_DestroyTexture(createdTextures[i]);
     }
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    if (hasWindow) {
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+    }
+    for (int i=0;i<audioBuffers.size();i++) {
+        SDL_free(audioBuffers[i]);
+    }
     SDL_Quit();
 }
 
@@ -134,6 +139,33 @@ qnd::Initializer & qnd::Initializer::addTexture(const Uint8 *data, const Uint64 
     createdTextures.add(texture);
     if (textureOut != nullptr) {
         *textureOut = texture;
+    }
+    return *this;
+}
+
+qnd::Initializer& qnd::Initializer::addWavAudio(const Uint8* data, const Uint64 dataSize, Uint8** audioDataOut,
+    Uint32 * audioLengthOut) {
+    SDL_AudioSpec audioSpec;//may also have to return this
+    Uint8 * audiodata;
+    Uint32 audiodataLength;
+
+    SDL_IOStream * memoryIoStream = SDL_IOFromConstMem(data, dataSize);
+    if (memoryIoStream == nullptr) {
+        SDL_Log("Failed to allocate memory for SDL_IOFromConstMem: %s",SDL_GetError());
+        cleanup();
+        throw InitializeException();
+    }
+    if (!SDL_LoadWAV_IO(memoryIoStream,true, &audioSpec, &audiodata, &audiodataLength)) {
+        SDL_Log("Failed to load WAV: %s",SDL_GetError());
+        cleanup();
+        throw InitializeException();
+    }
+    audioBuffers.add(audiodata);
+    if (audioDataOut != nullptr) {
+        *audioDataOut = audiodata;
+    }
+    if (audioLengthOut != nullptr) {
+        *audioLengthOut = audiodataLength;
     }
     return *this;
 }
