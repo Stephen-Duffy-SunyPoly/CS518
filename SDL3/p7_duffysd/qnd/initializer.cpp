@@ -19,6 +19,9 @@ void qnd::Initializer::cleanup() {
     for (int i=0;i<audioBuffers.size();i++) {
         SDL_free(audioBuffers[i]);
     }
+    for (int i=0;i<audioDevices.size();i++) {
+        SDL_CloseAudioDevice(audioDevices[i]);
+    }
     SDL_Quit();
 }
 
@@ -166,6 +169,34 @@ qnd::Initializer& qnd::Initializer::addWavAudio(const Uint8* data, const Uint64 
     }
     if (audioLengthOut != nullptr) {
         *audioLengthOut = audiodataLength;
+    }
+    return *this;
+}
+
+qnd::Initializer& qnd::Initializer::addDefaultAudioPlaybackDevice(SDL_AudioDeviceID* audioDeviceOut) {
+    SDL_AudioDeviceID device = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
+    if (device == 0) {
+        SDL_Log("Failed to open playback audio device: %s",SDL_GetError());
+        cleanup();
+        throw InitializeException();
+    }
+    audioDevices.add(device);
+    if (audioDeviceOut != nullptr) {
+        *audioDeviceOut = device;
+    }
+    return *this;
+}
+
+qnd::Initializer& qnd::Initializer::addDefaultAudioRecordingDevice(SDL_AudioDeviceID* audioDeviceOut) {
+    SDL_AudioDeviceID device = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_RECORDING, nullptr);
+    if (device == 0) {
+        SDL_Log("Failed to open recording audio device: %s",SDL_GetError());
+        cleanup();
+        throw InitializeException();
+    }
+    audioDevices.add(device);
+    if (audioDeviceOut != nullptr) {
+        *audioDeviceOut = device;
     }
     return *this;
 }
