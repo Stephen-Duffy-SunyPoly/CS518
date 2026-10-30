@@ -25,6 +25,9 @@ void qnd::Initializer::cleanup() {
     for (int i=0;i<audioDevices.size();i++) {
         SDL_CloseAudioDevice(audioDevices[i]);
     }
+    for (int i=0;i<mutexes.size();i++) {
+        SDL_DestroyMutex(mutexes[i]);
+    }
     SDL_Quit();
 }
 
@@ -216,6 +219,20 @@ qnd::Initializer& qnd::Initializer::addAudioStream(const SDL_AudioSpec* srcSpec,
     audioStreams.add(stream);
     if (streamOut != nullptr) {
         *streamOut = stream;
+    }
+    return *this;
+}
+
+qnd::Initializer& qnd::Initializer::addMutex(SDL_Mutex** mutexOut) {
+    SDL_Mutex * mutex = SDL_CreateMutex();
+    if (mutexOut == nullptr) {
+        SDL_Log("Failed to create mutex: %s",SDL_GetError());
+        cleanup();
+        throw InitializeException();
+    }
+    mutexes.add(mutex);
+    if (mutexOut != nullptr) {
+        *mutexOut = mutex;
     }
     return *this;
 }

@@ -16,6 +16,7 @@ namespace qnd {
     List<Uint8*> audioBuffers;
     List<SDL_AudioDeviceID> audioDevices;
     List<SDL_AudioStream *> audioStreams;
+    List<SDL_Mutex *> mutexes;
 
     int windowsWidth = 0;
     int windowsHeight = 0;
@@ -38,6 +39,7 @@ namespace qnd {
      * @return this
      */
     Initializer & addAudioStream(const SDL_AudioSpec * srcSpec, const SDL_AudioSpec * dstSpec, SDL_AudioStream ** streamOut);
+    Initializer & addMutex(SDL_Mutex ** mutexOut);
 
 
     [[nodiscard]] int getWindowWidth() const;

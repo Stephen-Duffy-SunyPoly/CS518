@@ -8,6 +8,7 @@
 bool raceStarted = false;
 bool raceFinished = false;
 int winner = 0;
+SDL_Mutex * raceFinishedMutex = nullptr;
 
 constexpr int STEPS = 2*2*2*2*2*2*2*2*2*2*2*2;
 static float racerProgress[4] = {0,0,0,0};
@@ -50,10 +51,12 @@ static int SDLCALL racerThread(void * data) {
         SDL_DelayNS(SDL_rand(15000000));//seems like a serviceable amount of random delay
     }
     //acquire the mutex
+    SDL_LockMutex(raceFinishedMutex);
     if (!raceFinished) {
         winner = racer;
         raceFinished = true;
     }
+    SDL_UnlockMutex(raceFinishedMutex);
     //release the mutex
     return 0;
 }
@@ -80,6 +83,7 @@ int main() {
     .addWavAudio(Level_Complete_Sound_Effect_wav_data, Level_Complete_Sound_Effect_wav_size, &testWavData, &wavDataSize, & wavDataSpec)
     .addDefaultAudioPlaybackDevice(&audioDevice)
     .addAudioStream(&wavDataSpec, nullptr, &audioStream)
+    .addMutex(&raceFinishedMutex)
     ;
 
     // const int width = init.getWindowWidth();
@@ -97,6 +101,9 @@ int main() {
     SDL_Thread * threads[4];
     for (int i=0;i<4;i++) {
         threads[i] = SDL_CreateThread(racerThread, "racerThread", reinterpret_cast<void*>(static_cast<intptr_t>(i)));
+    }
+    for (int & easingIndex : easingIndices) {
+        easingIndex = SDL_rand(6);
     }
 
     bool should_quit = false;
