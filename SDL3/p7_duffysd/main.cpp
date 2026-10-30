@@ -14,7 +14,7 @@ constexpr float GRAVITY = 0.75f;
 constexpr float AIR_DRAG = 0.95f;
 
 int main() {
-    qnd::Initializer init(SDL_INIT_VIDEO);
+    qnd::Initializer init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
     SDL_Window * window = nullptr;
     SDL_Renderer * renderer = nullptr;
@@ -24,11 +24,23 @@ int main() {
     SDL_Texture * fontLargeTexture = nullptr;
     SDL_Texture * manSpriteSheetTexture = nullptr;
 
+    Uint8 * testWavData = nullptr;
+    Uint32 wavDataSize =0;
+    SDL_AudioSpec wavDataSpec;
+
+    SDL_AudioDeviceID audioDevice;
+    SDL_AudioStream * audioStream;
+
     init.addWindowSizeOfTexture("p6_duffysd",0, &window, &renderer,background_png_data, background_png_size, &background)
     .addTexture(ball_bmp_data, ball_bmp_size, &ball)
     .addTexture(font_11x16_png_data, font_11x16_png_size, &fontSmallTexture,true)
     .addTexture(font_22x32_png_data, font_22x32_png_size, &fontLargeTexture,true)
-    .addTexture(mann_png_data, mann_png_size, &manSpriteSheetTexture);
+    .addTexture(mann_png_data, mann_png_size, &manSpriteSheetTexture)
+    .addWavAudio(Level_Complete_Sound_Effect_wav_data, Level_Complete_Sound_Effect_wav_size, &testWavData, &wavDataSize, & wavDataSpec)
+    .addDefaultAudioPlaybackDevice(&audioDevice)
+    .addAudioStream(&wavDataSpec, nullptr, &audioStream)
+    ;
+
 
 
     const int width = init.getWindowWidth();
@@ -52,8 +64,12 @@ int main() {
     int score=0;
     int highScore =0;
 
+    SDL_BindAudioStream(audioDevice,audioStream);
+    SDL_PutAudioStreamData(audioStream, testWavData,static_cast<int>(wavDataSize));
+
     bool should_quit = false;
     qnd::FrameRate frameRate;
+
     while (!should_quit) {
         SDL_Event event;
         bool mouseClicked = false;
@@ -186,6 +202,10 @@ int main() {
         SDL_snprintf(highScoreDisplay,100,"High Score: %d",highScore);
         fontSmall.drawString(renderer,scoreDisplay,10,10);
         fontSmall.drawString(renderer,highScoreDisplay,10,10+fontSmall.getHeight());
+
+        char amtDsp[100];
+        SDL_snprintf(amtDsp,100,"data left: %d",SDL_GetAudioStreamAvailable(audioStream));
+        fontSmall.drawStringCentered(renderer,amtDsp,width/2, 100);
 
         SDL_RenderPresent(renderer);
         frameRate.delay();
