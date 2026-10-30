@@ -5,13 +5,58 @@
 #include "qnd/initializer.hpp"
 #include "qnd/math.hpp"
 
+bool raceStarted = false;
+bool raceFinished = false;
+int winner = 0;
 
+constexpr int STEPS = 2*2*2*2*2*2*2*2*2*2*2*2;
+static float racerProgress[4] = {0,0,0,0};
+static int easingIndices[4] = {0,0,0,0};
 
-constexpr int PLAYER_ANIMATION_SET_STANDING = 0;
-constexpr int PLAYER_ANIMATION_SET_RUN_LEFT = 12;
-constexpr int PLAYER_ANIMATION_SET_RUN_RIGHT = 24;
-constexpr float GRAVITY = 0.75f;
-constexpr float AIR_DRAG = 0.95f;
+static float lerp(float a, float b, float t) {
+    return a + t * (b - a);
+}
+
+static float (*easingFunctions[])(float) = {
+    [](const float t){return t + SDL_sinf(25.2f*t)/25.2f;},
+    [](const float t){return SDL_powf(t,0.15f);},
+    [](const float t){return SDL_powf(t,20.f);},
+    [](const float t){return (SDL_sinf(t*SDL_PI_F - SDL_PI_F/2.0f)+1.0f)/2.0f;},
+    [](const float t) {
+        float x = t*6;
+        float h = x + 3*SDL_expf(-SDL_powf(x-3.0f,2.0f)) * SDL_sinf(4.0f*x);
+        return h/6.0f;
+    },
+    [](const float t) {
+        float x = t*6;
+        float h = x + 3*SDL_expf(-SDL_powf(x-3.0f,2.0f)) * SDL_sinf(15.0f*x);
+        float i = h/6.0f;
+        float x2 = 40*t-20;
+        float cmb = SDL_expf(-x2)/SDL_powf(1.0f+SDL_expf(-x2),2.0f);
+        cmb/=4.0f;
+        float d = t;
+        float l = lerp(i,d,cmb);
+        return l;
+    }
+};
+
+static int SDLCALL racerThread(void * data) {
+    int racer = static_cast<int>(reinterpret_cast<intptr_t>(data));
+    while (!raceStarted) {
+        //spin wait
+    }
+    for (int i=0;i<STEPS && !raceFinished;i++) {
+        racerProgress[racer] = static_cast<float>(i) / static_cast<float>(STEPS);
+        SDL_DelayNS(SDL_rand(15000000));//seems like a serviceable amount of random delay
+    }
+    //acquire the mutex
+    if (!raceFinished) {
+        winner = racer;
+        raceFinished = true;
+    }
+    //release the mutex
+    return 0;
+}
 
 int main() {
     qnd::Initializer init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
@@ -19,10 +64,8 @@ int main() {
     SDL_Window * window = nullptr;
     SDL_Renderer * renderer = nullptr;
     SDL_Texture * background = nullptr;
-    SDL_Texture * ball = nullptr;
     SDL_Texture * fontSmallTexture = nullptr;
     SDL_Texture * fontLargeTexture = nullptr;
-    SDL_Texture * manSpriteSheetTexture = nullptr;
 
     Uint8 * testWavData = nullptr;
     Uint32 wavDataSize =0;
@@ -31,48 +74,36 @@ int main() {
     SDL_AudioDeviceID audioDevice;
     SDL_AudioStream * audioStream;
 
-    init.addWindowSizeOfTexture("p6_duffysd",0, &window, &renderer,background_png_data, background_png_size, &background)
-    .addTexture(ball_bmp_data, ball_bmp_size, &ball)
+    init.addWindowSizeOfTexture("p6_duffysd",0, &window, &renderer,track_png_data, track_png_size, &background)
     .addTexture(font_11x16_png_data, font_11x16_png_size, &fontSmallTexture,true)
     .addTexture(font_22x32_png_data, font_22x32_png_size, &fontLargeTexture,true)
-    .addTexture(mann_png_data, mann_png_size, &manSpriteSheetTexture)
     .addWavAudio(Level_Complete_Sound_Effect_wav_data, Level_Complete_Sound_Effect_wav_size, &testWavData, &wavDataSize, & wavDataSpec)
     .addDefaultAudioPlaybackDevice(&audioDevice)
     .addAudioStream(&wavDataSpec, nullptr, &audioStream)
     ;
 
-
-
-    const int width = init.getWindowWidth();
-    const int height = init.getWindowHeight();
+    // const int width = init.getWindowWidth();
+    // const int height = init.getWindowHeight();
 
 
     qnd::Font fontSmall(fontSmallTexture);
     qnd::Font fontLarge(fontLargeTexture);
-    qnd::SpriteSheet manSprite(manSpriteSheetTexture,12,3);
-    SDL_SetTextureScaleMode(manSpriteSheetTexture, SDL_SCALEMODE_NEAREST);
-
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    SDL_FPoint playerPosition{300.0f,645.0f};
-    SDL_FPoint ballPos{300.0f,200.0f};
-    SDL_FPoint ballVelocity{0,3};
-    int playerMovementAnimationFrame = 0;
+    // SDL_BindAudioStream(audioDevice,audioStream);
+    // SDL_PutAudioStreamData(audioStream, testWavData,static_cast<int>(wavDataSize));
 
-    const float ground = playerPosition.y + static_cast<float>(manSprite.getHeight())*1.5f;
-
-    int score=0;
-    int highScore =0;
-
-    SDL_BindAudioStream(audioDevice,audioStream);
-    SDL_PutAudioStreamData(audioStream, testWavData,static_cast<int>(wavDataSize));
+    //create the threads
+    SDL_Thread * threads[4];
+    for (int i=0;i<4;i++) {
+        threads[i] = SDL_CreateThread(racerThread, "racerThread", reinterpret_cast<void*>(static_cast<intptr_t>(i)));
+    }
 
     bool should_quit = false;
     qnd::FrameRate frameRate;
-
+    raceStarted = true; //tmp
     while (!should_quit) {
         SDL_Event event;
-        bool mouseClicked = false;
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_EVENT_QUIT:
@@ -84,18 +115,9 @@ int main() {
                         case SDLK_ESCAPE:
                             should_quit = true;
                             break;
-                        case SDLK_SPACE:
-                            if (ballPos.y+32 >= ground) {
-                                ballVelocity = {static_cast<float>(SDL_rand(30) - 15)/2.f,-static_cast<float>(SDL_rand(170))/10.0f-12.0f};
-                                score = 0;
-                            }
-                            break;
                         default:
                             break;
                     }
-                    break;
-                case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                    mouseClicked = true;
                     break;
                 default:
                     break;
@@ -105,118 +127,39 @@ int main() {
         //draw the background
         SDL_RenderTexture(renderer, background,nullptr,nullptr);
 
-        SDL_FPoint mouse{};
-        SDL_GetMouseState(&mouse.x, &mouse.y);
+        //left edge is 152
+        //right edge is 1213
+        const float racerYs[] = {160, 275, 390, 500};
 
-        float playerMovementDistance = ((mouse.x-static_cast<float>(manSprite.getWidth())/2.0f) - playerPosition.x) *0.04f;
-        float moveAmt = SDL_fabsf(playerMovementDistance);
-        int animationSet = 0;
-        if (moveAmt > 1.05) {
-            int direction = (playerMovementDistance > 0) ? 1:-1;
-            if (moveAmt > 3.8) {
-                //running speed
-                if (direction == 1) {
-                    animationSet = PLAYER_ANIMATION_SET_RUN_RIGHT;
-                } else {
-                    animationSet = PLAYER_ANIMATION_SET_RUN_LEFT;
-                }
-                playerMovementAnimationFrame += direction;
-            } else {
-                animationSet = PLAYER_ANIMATION_SET_STANDING;
-                //standing but animating speed
-                if (frameRate.getFrameCount()%2 == 0) {
-                    playerMovementAnimationFrame += direction;
-                }
-            }
+        constexpr float trackWidth = 1213 - 152;
 
-            playerMovementAnimationFrame %= 12;
-            if (playerMovementAnimationFrame < 0) {
-                playerMovementAnimationFrame += 12;
-            }
-        }else {
-            animationSet = PLAYER_ANIMATION_SET_STANDING;
-            playerMovementAnimationFrame = 0;
-        }
-        playerPosition.x += playerMovementDistance;
-        manSprite.draw(renderer,animationSet + playerMovementAnimationFrame,playerPosition,1.5f);
+        for (int i=0;i<4;i++) {
+            SDL_FRect spritePos{
+                .x = easingFunctions[easingIndices[i]](racerProgress[i]) * trackWidth+152,
+                .y = racerYs[i],
+                .w = 50,
+                .h = 50,
+            };
+            spritePos.x -= spritePos.w;
 
-        //ball physics
-        //if it hit the ground, remove its speed
-        if (ballPos.y > ground-32 && ballVelocity.y > 0) {
-            ballVelocity.y = 0;
-            ballVelocity.x *= AIR_DRAG;
-            if (score > highScore) {
-                highScore = score;
-            }
-        }
-        //if hit the walls, bounce and reduce speed
-        if (ballPos.x <=0 || ballPos.x >= static_cast<float>(width) - 64) {
-            ballVelocity.x = -ballVelocity.x * 0.7f;
-            ballPos.x += ballVelocity.x;
+            SDL_SetRenderDrawColor(renderer, 0, 255, 255, 255);
+            SDL_RenderFillRect(renderer, &spritePos);
         }
 
-        //move the ball and apply acceleration
-        ballPos += ballVelocity;
-        ballVelocity.y += GRAVITY;
-        ballVelocity.x *= AIR_DRAG;
 
-        constexpr float hitAreaSize = 55;
-        if (mouseClicked) {
-            //get direction from the player
-            SDL_FPoint ballCenter = ballPos + SDL_FPoint{32.0f,32.0f};
-            SDL_FPoint playerHitPoint = playerPosition + SDL_FPoint{static_cast<float>(manSprite.getWidth())*1.5f/2.0f,40.0f};
-            SDL_FPoint direction = ballCenter - playerHitPoint;
-            float directionDistanceSquared = *direction;
-            if (directionDistanceSquared < hitAreaSize*hitAreaSize) {
-                float powerScale = -0.99f*(-directionDistanceSquared/(hitAreaSize*hitAreaSize) + 1.0f) + 1.3f;
-                ballVelocity = direction * powerScale;
-                ballVelocity *= 1.1f;
-                ballVelocity.y *= 0.6f;
-                //if it was hit while not on the ground, increase the score
-                if (ballPos.y < ground-32) {
-                    score++;
-                }
-            }
-        }
-        // SDL_FRect bbp{
-        //     .x = static_cast<float>(manSprite.getWidth())*1.5f/2.0f-hitAreaSize + playerPosition.x,
-        //     .y = 40.0f-hitAreaSize + playerPosition.y,
-        //     .w = hitAreaSize*2,
-        //     .h = hitAreaSize*2
-        // };
-        // SDL_SetRenderDrawColor(renderer,0,0,0,60);
-        // SDL_RenderFillRect(renderer,&bbp);
 
-        SDL_FRect bd{ballPos.x,ballPos.y,static_cast<float>(ball->w),static_cast<float>(ball->h)};
-        SDL_RenderTextureRotated(renderer, ball, nullptr,&bd,ballPos.x,nullptr,SDL_FLIP_NONE);
-
-        if (ballPos.y >= ground-32) {
-            //when the ball is on the ground
-            char scoreReport[100];
-            SDL_snprintf(scoreReport,100,"You Scored: %d",score);
-            fontLarge.drawStringCentered(renderer,scoreReport,width/2,height/2);
-        }
-        char scoreDisplay[100];
-        char highScoreDisplay[100];
-        SDL_snprintf(scoreDisplay,100,"Score: %d",score);
-        SDL_snprintf(highScoreDisplay,100,"High Score: %d",highScore);
-        fontSmall.drawString(renderer,scoreDisplay,10,10);
-        fontSmall.drawString(renderer,highScoreDisplay,10,10+fontSmall.getHeight());
-
-        char amtDsp[100];
-        SDL_snprintf(amtDsp,100,"data left: %d",SDL_GetAudioStreamAvailable(audioStream));
-        fontSmall.drawStringCentered(renderer,amtDsp,width/2, 100);
 
         SDL_RenderPresent(renderer);
         frameRate.delay();
 
     }
 
-
-
-
-
     //clean up zone
-    //no longer necessary! This functionality is handled automatically but the destructor of the initializer
+    raceFinished = true;
+
+    for (auto & thread : threads) {
+        SDL_WaitThread(thread, nullptr);
+    }
+
     return 0;
 }
