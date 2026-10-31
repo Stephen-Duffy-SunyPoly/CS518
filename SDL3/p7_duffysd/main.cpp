@@ -115,8 +115,13 @@ int main() {
     for (int i=0;i<4;i++) {
         threads[i] = SDL_CreateThread(racerThread, "racerThread", reinterpret_cast<void*>(static_cast<intptr_t>(i)));
     }
-    for (int & easingIndex : easingIndices) {
-        easingIndex = SDL_rand(6);
+    int easeOptions[] = {0,1,2,3,4,5};
+    for (int i=0;i<4;i++) {
+        int option = SDL_rand(6-i);
+        easingIndices[i] = easeOptions[option];
+        for (int j = option; j< 5;j++) {
+            easeOptions[j] = easeOptions[j+1];
+        }
     }
 
     bool should_quit = false;
@@ -203,7 +208,7 @@ int main() {
                     finishedAnimationFrame, nullptr, SDL_FLIP_NONE);
 
                 SDL_FRect tr{
-                    .x= static_cast<float>(init.getWindowWidth() / 2 - 300+ ((winner == 3)?-200:0)),
+                    .x= static_cast<float>(init.getWindowWidth() / 2 - 335+ ((winner == 3)?-170:0)),
                     .y = 250.0f,
                     .w = 600,
                     .h = 400,
