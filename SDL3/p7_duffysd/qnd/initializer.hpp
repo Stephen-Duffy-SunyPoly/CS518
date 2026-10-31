@@ -7,6 +7,12 @@
 #include "list.hpp"
 
 namespace qnd {
+  struct WavAudioInfo {
+    Uint8 * data;
+    Uint32 dataSize;
+    SDL_AudioSpec spec;
+  };
+
   class Initializer {
     bool cleanedUp = false;
     bool hasWindow = false;
@@ -30,6 +36,7 @@ namespace qnd {
     Initializer & addWindowSizeOfTexture(const char *title, SDL_WindowFlags window_flags, SDL_Window **windowOut, SDL_Renderer **rendererOut, const Uint8 * imageData, Uint64 imageDataSize, SDL_Texture ** textureOut);
     Initializer & addTexture(const Uint8 * data, Uint64 dataSize, SDL_Texture ** textureOut, bool useColorKey = false);
     Initializer & addWavAudio(const Uint8 * data, Uint64 dataSize, Uint8 ** audioDataOut, Uint32 * audioLengthOut, SDL_AudioSpec * audioSpecOut);
+    Initializer & addWavAudio(const Uint8 * data, Uint64 dataSize, WavAudioInfo * audioInfoOut);
     Initializer & addDefaultAudioPlaybackDevice(SDL_AudioDeviceID * audioDeviceOut);
     Initializer & addDefaultAudioRecordingDevice(SDL_AudioDeviceID * audioDeviceOut);
     /**

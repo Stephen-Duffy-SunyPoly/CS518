@@ -72,9 +72,10 @@ int main() {
 
     SDL_Texture * racers[4];
 
-    Uint8 * testWavData = nullptr;
-    Uint32 wavDataSize =0;
-    SDL_AudioSpec wavDataSpec;
+    qnd::WavAudioInfo startAudioInfo{};
+    qnd::WavAudioInfo raceMusicInfo{};
+    qnd::WavAudioInfo raceFinishAudioInfo{};
+
 
     SDL_AudioDeviceID audioDevice;
     SDL_AudioStream * audioStream;
@@ -82,9 +83,11 @@ int main() {
     init.addWindowSizeOfTexture("p6_duffysd",0, &window, &renderer,track_png_data, track_png_size, &background)
     .addTexture(font_11x16_png_data, font_11x16_png_size, &fontSmallTexture,true)
     .addTexture(font_22x32_png_data, font_22x32_png_size, &fontLargeTexture,true)
-    .addWavAudio(Level_Complete_Sound_Effect_wav_data, Level_Complete_Sound_Effect_wav_size, &testWavData, &wavDataSize, & wavDataSpec)
+    .addWavAudio(start_wav_data, start_wav_size, &startAudioInfo)
+    .addWavAudio(Main_Theme_wav_data, Main_Theme_wav_size, &raceMusicInfo)
+    .addWavAudio(complete_wav_data, complete_wav_size, &raceFinishAudioInfo)
     .addDefaultAudioPlaybackDevice(&audioDevice)
-    .addAudioStream(&wavDataSpec, nullptr, &audioStream)
+    .addAudioStream(&startAudioInfo.spec, nullptr, &audioStream)
     .addMutex(&raceFinishedMutex)
     .addTexture(racer1_png_data,racer1_png_size, &racers[0])
     .addTexture(racer2_png_data,racer2_png_size, &racers[1])
@@ -92,16 +95,15 @@ int main() {
     .addTexture(racer4_png_data,racer4_png_size, &racers[3])
     ;
 
-    // const int width = init.getWindowWidth();
-    // const int height = init.getWindowHeight();
+
 
 
     qnd::Font fontSmall(fontSmallTexture);
     qnd::Font fontLarge(fontLargeTexture);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    // SDL_BindAudioStream(audioDevice,audioStream);
-    // SDL_PutAudioStreamData(audioStream, testWavData,static_cast<int>(wavDataSize));
+    SDL_BindAudioStream(audioDevice,audioStream);
+    SDL_PutAudioStreamData(audioStream, startAudioInfo.data,static_cast<int>(startAudioInfo.dataSize));
 
     //create the threads
     SDL_Thread * threads[4];
@@ -113,8 +115,9 @@ int main() {
     }
 
     bool should_quit = false;
+    bool finishAnimationStarted = false;
     qnd::FrameRate frameRate;
-    raceStarted = true; //tmp
+
     while (!should_quit) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -135,6 +138,19 @@ int main() {
                 default:
                     break;
             }
+        }
+
+        if (!raceStarted) {
+            if (SDL_GetAudioStreamAvailable(audioStream) == 0) {
+                SDL_SetAudioStreamFormat(audioStream,&raceMusicInfo.spec,nullptr);
+                SDL_PutAudioStreamData(audioStream,raceMusicInfo.data,static_cast<int>(raceMusicInfo.dataSize));
+                raceStarted = true;
+            }
+        } else if (raceFinished && !finishAnimationStarted) {
+            finishAnimationStarted = true;
+            SDL_ClearAudioStream(audioStream);
+            SDL_SetAudioStreamFormat(audioStream,&raceFinishAudioInfo.spec,nullptr);
+            SDL_PutAudioStreamData(audioStream, raceFinishAudioInfo.data,static_cast<int>(raceFinishAudioInfo.dataSize));
         }
 
         //draw the background
@@ -169,6 +185,7 @@ int main() {
 
     //clean up zone
     raceFinished = true;
+    raceStarted = true;
 
     for (auto & thread : threads) {
         SDL_WaitThread(thread, nullptr);

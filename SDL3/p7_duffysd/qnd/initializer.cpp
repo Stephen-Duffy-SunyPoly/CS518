@@ -181,6 +181,10 @@ qnd::Initializer& qnd::Initializer::addWavAudio(const Uint8* data, const Uint64 
     return *this;
 }
 
+qnd::Initializer& qnd::Initializer::addWavAudio(const Uint8* data, Uint64 dataSize, WavAudioInfo* audioInfoOut) {
+    return addWavAudio(data,dataSize,&audioInfoOut->data,&audioInfoOut->dataSize,&audioInfoOut->spec);
+}
+
 qnd::Initializer& qnd::Initializer::addDefaultAudioPlaybackDevice(SDL_AudioDeviceID* audioDeviceOut) {
     SDL_AudioDeviceID device = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, nullptr);
     if (device == 0) {
