@@ -21,7 +21,7 @@ static float lerp(float a, float b, float t) {
 static float (*easingFunctions[])(float) = {
     [](const float t){return t + SDL_sinf(25.2f*t)/25.2f;},
     [](const float t){return SDL_powf(t,0.15f);},
-    [](const float t){return SDL_powf(t,20.f);},
+    [](const float t){return SDL_powf(t,15.f);},
     [](const float t){return (SDL_sinf(t*SDL_PI_F - SDL_PI_F/2.0f)+1.0f)/2.0f;},
     [](const float t) {
         float x = t*6;
@@ -189,6 +189,15 @@ int main() {
         if (raceFinished) {
             SDL_SetRenderDrawColor(renderer, 128, 128, 128, 128);
             SDL_RenderFillRect(renderer, nullptr);
+            if (finishedAnimationFrame > 54) {
+                SDL_FRect starRect{
+                    .x = static_cast<float>(init.getWindowWidth() / 2 - 350),
+                    .y = 100,
+                    .w = 700,
+                    .h = 700,
+                  };
+                SDL_RenderTextureRotated(renderer, celebrationStarTexture,nullptr, &starRect, finishedAnimationFrame, nullptr, SDL_FLIP_NONE);
+            }
             fontLarge.drawStringCentered(renderer, "Your", init.getWindowWidth()/2,100);
             if (finishedAnimationFrame > 25) {
                 fontLarge.drawStringCentered(renderer, "Winner", init.getWindowWidth()/2,150);
@@ -197,16 +206,6 @@ int main() {
                 fontLarge.drawStringCentered(renderer, "IS", init.getWindowWidth()/2,200);
             }
             if (finishedAnimationFrame > 54) {
-                SDL_FRect starRect{
-                  .x = static_cast<float>(init.getWindowWidth() / 2 - 350),
-                  .y = 100,
-                  .w = 700,
-                  .h = 700,
-                };
-                SDL_RenderTextureRotated(renderer, celebrationStarTexture,
-                    nullptr, &starRect,
-                    finishedAnimationFrame, nullptr, SDL_FLIP_NONE);
-
                 SDL_FRect tr{
                     .x= static_cast<float>(init.getWindowWidth() / 2 - 335+ ((winner == 3)?-170:0)),
                     .y = 250.0f,
