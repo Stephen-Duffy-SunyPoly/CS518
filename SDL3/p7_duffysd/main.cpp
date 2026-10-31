@@ -5,8 +5,8 @@
 #include "qnd/initializer.hpp"
 #include "qnd/math.hpp"
 
-static bool raceStarted = false;
-static bool raceFinished = false;
+volatile static bool raceStarted = false;
+volatile static bool raceFinished = false;
 static int winner = 0;
 static SDL_Mutex * raceFinishedMutex = nullptr;
 
