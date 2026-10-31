@@ -16,16 +16,16 @@ void qnd::Initializer::cleanup() {
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
     }
-    for (int i=0;i<audioStreams.size();i++) {
+    for (Uint32 i=0;i<audioStreams.size();i++) {
         SDL_DestroyAudioStream(audioStreams[i]);
     }
-    for (int i=0;i<audioBuffers.size();i++) {
+    for (Uint32 i=0;i<audioBuffers.size();i++) {
         SDL_free(audioBuffers[i]);
     }
-    for (int i=0;i<audioDevices.size();i++) {
+    for (Uint32 i=0;i<audioDevices.size();i++) {
         SDL_CloseAudioDevice(audioDevices[i]);
     }
-    for (int i=0;i<mutexes.size();i++) {
+    for (Uint32 i=0;i<mutexes.size();i++) {
         SDL_DestroyMutex(mutexes[i]);
     }
     SDL_Quit();
