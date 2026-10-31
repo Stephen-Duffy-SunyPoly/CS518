@@ -5,10 +5,10 @@
 #include "qnd/initializer.hpp"
 #include "qnd/math.hpp"
 
-bool raceStarted = false;
-bool raceFinished = false;
-int winner = 0;
-SDL_Mutex * raceFinishedMutex = nullptr;
+static bool raceStarted = false;
+static bool raceFinished = false;
+static int winner = 0;
+static SDL_Mutex * raceFinishedMutex = nullptr;
 
 constexpr int STEPS = 2*2*2*2*2*2*2*2*2*2*2*2;
 static float racerProgress[4] = {0,0,0,0};
@@ -46,7 +46,7 @@ static int SDLCALL racerThread(void * data) {
     while (!raceStarted) {
         //spin wait
     }
-    for (int i=0;i<STEPS && !raceFinished;i++) {
+    for (int i=0;i<STEPS+1 && !raceFinished;i++) {
         racerProgress[racer] = static_cast<float>(i) / static_cast<float>(STEPS);
         SDL_DelayNS(SDL_rand(15000000));//seems like a serviceable amount of random delay
     }
@@ -69,6 +69,7 @@ int main() {
     SDL_Texture * background = nullptr;
     SDL_Texture * fontSmallTexture = nullptr;
     SDL_Texture * fontLargeTexture = nullptr;
+    SDL_Texture * celebrationStarTexture = nullptr;
 
     SDL_Texture * racers[4];
 
@@ -79,6 +80,7 @@ int main() {
 
     SDL_AudioDeviceID audioDevice;
     SDL_AudioStream * audioStream;
+    SDL_AudioStream * endCelebrateAudioStream;
 
     init.addWindowSizeOfTexture("p6_duffysd",0, &window, &renderer,track_png_data, track_png_size, &background)
     .addTexture(font_11x16_png_data, font_11x16_png_size, &fontSmallTexture,true)
@@ -88,11 +90,13 @@ int main() {
     .addWavAudio(complete_wav_data, complete_wav_size, &raceFinishAudioInfo)
     .addDefaultAudioPlaybackDevice(&audioDevice)
     .addAudioStream(&startAudioInfo.spec, nullptr, &audioStream)
+    .addAudioStream(&raceFinishAudioInfo.spec, nullptr,&endCelebrateAudioStream)
     .addMutex(&raceFinishedMutex)
     .addTexture(racer1_png_data,racer1_png_size, &racers[0])
     .addTexture(racer2_png_data,racer2_png_size, &racers[1])
     .addTexture(racer3_png_data,racer3_png_size, &racers[2])
     .addTexture(racer4_png_data,racer4_png_size, &racers[3])
+    .addTexture(star_png_data,star_png_size, &celebrationStarTexture)
     ;
 
 
@@ -103,6 +107,7 @@ int main() {
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     SDL_BindAudioStream(audioDevice,audioStream);
+    SDL_BindAudioStream(audioDevice,endCelebrateAudioStream);
     SDL_PutAudioStreamData(audioStream, startAudioInfo.data,static_cast<int>(startAudioInfo.dataSize));
 
     //create the threads
@@ -116,6 +121,8 @@ int main() {
 
     bool should_quit = false;
     bool finishAnimationStarted = false;
+    int finishedAnimationFrame = 0 ;
+    int fadeUpStart = 0;
     qnd::FrameRate frameRate;
 
     while (!should_quit) {
@@ -148,9 +155,8 @@ int main() {
             }
         } else if (raceFinished && !finishAnimationStarted) {
             finishAnimationStarted = true;
-            SDL_ClearAudioStream(audioStream);
-            SDL_SetAudioStreamFormat(audioStream,&raceFinishAudioInfo.spec,nullptr);
-            SDL_PutAudioStreamData(audioStream, raceFinishAudioInfo.data,static_cast<int>(raceFinishAudioInfo.dataSize));
+            SDL_PutAudioStreamData(endCelebrateAudioStream, raceFinishAudioInfo.data,static_cast<int>(raceFinishAudioInfo.dataSize));
+            SDL_SetAudioStreamGain(audioStream, 0.3f);
         }
 
         //draw the background
@@ -175,7 +181,48 @@ int main() {
             SDL_RenderTexture(renderer, racers[i], nullptr, &spritePos);
         }
 
+        if (raceFinished) {
+            SDL_SetRenderDrawColor(renderer, 128, 128, 128, 128);
+            SDL_RenderFillRect(renderer, nullptr);
+            fontLarge.drawStringCentered(renderer, "Your", init.getWindowWidth()/2,100);
+            if (finishedAnimationFrame > 25) {
+                fontLarge.drawStringCentered(renderer, "Winner", init.getWindowWidth()/2,150);
+            }
+            if (finishedAnimationFrame > 47) {
+                fontLarge.drawStringCentered(renderer, "IS", init.getWindowWidth()/2,200);
+            }
+            if (finishedAnimationFrame > 54) {
+                SDL_FRect starRect{
+                  .x = static_cast<float>(init.getWindowWidth() / 2 - 350),
+                  .y = 100,
+                  .w = 700,
+                  .h = 700,
+                };
+                SDL_RenderTextureRotated(renderer, celebrationStarTexture,
+                    nullptr, &starRect,
+                    finishedAnimationFrame, nullptr, SDL_FLIP_NONE);
 
+                SDL_FRect tr{
+                    .x= static_cast<float>(init.getWindowWidth() / 2 - 300+ ((winner == 3)?-200:0)),
+                    .y = 250.0f,
+                    .w = 600,
+                    .h = 400,
+                };
+                SDL_RenderTexture(renderer, racers[winner], nullptr, &tr);
+                fontSmall.drawStringCentered(renderer,"no refunds", init.getWindowWidth()/2,700);
+            }
+            if (fadeUpStart == 0 && SDL_GetAudioStreamAvailable(endCelebrateAudioStream) == 0) {
+                fadeUpStart = finishedAnimationFrame;
+            }
+
+            if (fadeUpStart != 0 && finishedAnimationFrame >= fadeUpStart && finishedAnimationFrame <= fadeUpStart+30) {
+                const int ufr = finishedAnimationFrame - fadeUpStart;
+                const float per = static_cast<float>(ufr) / 30.0f;
+                SDL_SetAudioStreamGain(audioStream, lerp(0.3f,1.0f,per));
+            }
+
+            finishedAnimationFrame++;
+        }
 
 
         SDL_RenderPresent(renderer);
