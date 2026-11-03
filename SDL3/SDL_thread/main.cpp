@@ -14,7 +14,7 @@ struct ThreadData {
     int id;
 };
 
-int SDLCALL myThread([[maybe_unused]] void * data) {
+static int SDLCALL myThread([[maybe_unused]] void * data) {
     ThreadData threadData = *static_cast<ThreadData*>(data);
     int i=0;
     while (*threadData.shouldRun) {

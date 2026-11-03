@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(SDL_sprites CXX C)
+project(SDL_threads CXX C)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -36,7 +36,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(SDL3_GFX)
 
-add_executable(SDL_sprites main.cpp
+add_executable(SDL_threads main.cpp
         frameRate.cpp
         frameRate.hpp
         spriteSheet.cpp
@@ -44,13 +44,13 @@ add_executable(SDL_sprites main.cpp
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC, catching most bugs without noise.
-    target_compile_options(SDL_sprites PRIVATE /W4)
+    target_compile_options(SDL_threads PRIVATE /W4)
 else()
     # all other non Microsoft compilers
-    target_compile_options(SDL_sprites PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(SDL_threads PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-target_include_directories(SDL_sprites PRIVATE ${sdl3_gfx_SOURCE_DIR})
+target_include_directories(SDL_threads PRIVATE ${sdl3_gfx_SOURCE_DIR})
 #manually specifying this is also necessary for some reason
 target_link_libraries(SDL3_gfx_Static PRIVATE SDL3::SDL3)
-target_link_libraries(SDL_sprites PRIVATE SDL3::SDL3 SDL3_image::SDL3_image SDL3_gfx_Static)
+target_link_libraries(SDL_threads PRIVATE SDL3::SDL3 SDL3_image::SDL3_image SDL3_gfx_Static)
