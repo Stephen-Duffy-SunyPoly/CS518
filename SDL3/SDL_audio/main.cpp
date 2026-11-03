@@ -8,14 +8,23 @@ constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
 int main(int argc, char* argv[]) {
 
+    qnd::Initializer init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+
 
     SDL_Window * window = nullptr;
     SDL_Renderer * renderer = nullptr;
     SDL_Texture * background = nullptr;
+    SDL_AudioStream * audioStream = nullptr;
+    SDL_AudioDeviceID audioDevice;
+    qnd::WavAudioInfo audioLoop{};
 
-    qnd::Initializer init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
-    init.addWindowSizeOfTexture("SDL Audio Demo", SDL_WINDOW_RESIZABLE|SDL_WINDOW_TRANSPARENT,
-       &window ,&renderer, shapes_png_data, shapes_png_size, &background);
+    init.addWindowSizeOfTexture("SDL Audio Demo", SDL_WINDOW_RESIZABLE | SDL_WINDOW_TRANSPARENT,
+                                &window ,&renderer, shapes_png_data, shapes_png_size, &background)
+        .addDefaultAudioPlaybackDevice(&audioDevice)
+        .addWavAudio(track3_wav_data, track3_wav_size, &audioLoop)
+        .addAudioStream(&audioLoop.spec, nullptr, &audioStream);
+
+    SDL_BindAudioStream(audioDevice, audioStream);
 
 
 
