@@ -6,6 +6,10 @@
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
+static void SDLCALL loopCallback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount) {
+    std:: cerr << "Loop Callback additional_amount " << additional_amount << " total_amount "<< total_amount <<std::endl;
+}
+
 int main(int argc, char* argv[]) {
 
     qnd::Initializer init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
@@ -26,9 +30,10 @@ int main(int argc, char* argv[]) {
 
     SDL_BindAudioStream(audioDevice, audioStream);
 
+    SDL_SetAudioStreamGetCallback(audioStream, loopCallback,nullptr);
 
 
-    SDL_RenderTexture(renderer, background, nullptr, nullptr);
+    SDL_PutAudioStreamData(audioStream, audioLoop.data, static_cast<int>(audioLoop.dataSize));
 
     qnd::FrameRate fr(30);
 
@@ -51,8 +56,16 @@ int main(int argc, char* argv[]) {
                 std::cout << "Resized: " << newWidth << "x" << newHeight << std::endl;
                 break;
             case SDL_EVENT_KEY_DOWN:
-                if (event.key.key == SDLK_ESCAPE) {
-                    shouldRun = false;
+                switch (event.key.key) {
+                    case SDLK_ESCAPE:
+                        shouldRun = false;
+                    break;
+                case SDLK_1:
+                    SDL_ClearAudioStream(audioStream);
+                    SDL_PutAudioStreamData(audioStream, audioLoop.data, static_cast<int>(audioLoop.dataSize));
+                    break;
+                default:
+                    break;
                 }
                 break;
             default:
@@ -64,6 +77,9 @@ int main(int argc, char* argv[]) {
         SDL_GetMouseState(&mouseX, &mouseY);
         SDL_RenderTexture(renderer, background, nullptr, nullptr);
 
+        // if (SDL_GetAudioStreamAvailable(audioStream) == 0) {
+        //     SDL_PutAudioStreamData(audioStream, audioLoop.data, static_cast<int>(audioLoop.dataSize));
+        // }
 
         SDL_RenderPresent(renderer);
         fr.delay();
