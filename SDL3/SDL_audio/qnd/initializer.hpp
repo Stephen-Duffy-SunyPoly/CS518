@@ -5,14 +5,9 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_render.h>
 #include "list.hpp"
+#include "audioInfo.hpp"
 
 namespace qnd {
-  struct WavAudioInfo {
-    Uint8 * data;
-    Uint32 dataSize;
-    SDL_AudioSpec spec;
-  };
-
   class Initializer {
     bool cleanedUp = false;
     bool hasWindow = false;

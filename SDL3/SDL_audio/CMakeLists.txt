@@ -39,7 +39,10 @@ add_executable(SDL_audio main.cpp qnd/frameRate.cpp qnd/spriteSheet.cpp ${ASSET_
         qnd/initializer.hpp
         qnd/list.hpp
         qnd/math.cpp
-        qnd/math.hpp)
+        qnd/math.hpp
+        qnd/audioInfo.hpp
+        qnd/sound.cpp
+        qnd/sound.hpp)
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC
