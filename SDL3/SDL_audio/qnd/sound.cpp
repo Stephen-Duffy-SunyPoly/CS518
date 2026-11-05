@@ -1,7 +1,7 @@
 #include "sound.hpp"
 
 void SDLCALL qnd::Sound::soundLoopCallBack(void* userdata, SDL_AudioStream* stream, int additional_amount,
-    int total_amount) {
+                                           [[maybe_unused]] int total_amount) {
     auto * sound = static_cast<Sound *>(userdata);
     if (sound->loop) {
         Uint32 chunkSize;
@@ -9,7 +9,7 @@ void SDLCALL qnd::Sound::soundLoopCallBack(void* userdata, SDL_AudioStream* stre
             //get the amount of data in the buffer that has yet to be played
             Uint32 remaining = sound->audioInfo.dataSize - sound->bufferLoopOffset;
             //if the amount of data request would run past the end of the buffer, set chink size to the amount of data that remains
-            chunkSize = SDL_min(additional_amount, remaining);
+            chunkSize = SDL_min((Uint32)additional_amount, remaining);
             //send the chunk of data to the buffer
             SDL_PutAudioStreamData(stream, sound->audioInfo.data + sound->bufferLoopOffset, static_cast<int>(chunkSize));
             //update the buffer offset

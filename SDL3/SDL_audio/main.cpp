@@ -7,7 +7,7 @@
 
 constexpr SDL_InitFlags initFLags = SDL_INIT_VIDEO;
 
-int main(int argc, char* argv[]) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
 
     qnd::Initializer init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
