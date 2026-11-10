@@ -20,6 +20,8 @@ namespace qnd {
     };
 }
 
+struct IndexOutOfBoundsException{};
+
 template <typename T>
 void qnd::List<T>::increaseAllocated() {
     if (allocated == 0) {
@@ -52,7 +54,7 @@ void qnd::List<T>::add(T& item) {
 template <typename T>
 T qnd::List<T>::get(Uint32 index) {
     if (!checkInBounds(index)) {
-        throw nullptr;
+        throw IndexOutOfBoundsException();
     }
     return data[index];
 }
