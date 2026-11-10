@@ -23,7 +23,8 @@ endif ()
 add_executable(compile_resource compile_resource.cpp)
 set_property(TARGET compile_resource PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/temp")
 set(ASSET_OUTPUT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/assets.h")
-set(ASSET_OUTPUT_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/assets.c")
+set(ASSET_OUTPUT_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/assets.c"
+        qnd/stack.hpp)
 file(GLOB ASSET_STUFF "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
 
 add_custom_command(
@@ -33,16 +34,21 @@ add_custom_command(
         WORKING_DIRECTORY ${CMAKE_CURRENT_BIN_DIR}
 )
 
-#regular application stuff
-add_executable(SDL_stateMachine main.cpp qnd/frameRate.cpp qnd/spriteSheet.cpp ${ASSET_OUTPUT_SOURCE}
-        qnd/initializer.cpp
+set(QND_SOURCES qnd/frameRate.cpp qnd/spriteSheet.cpp qnd/initializer.cpp
         qnd/initializer.hpp
         qnd/list.hpp
         qnd/math.cpp
         qnd/math.hpp
         qnd/audioInfo.hpp
         qnd/sound.cpp
-        qnd/sound.hpp)
+        qnd/sound.hpp
+        qnd/stateMachine/Framework.cpp
+        qnd/stateMachine/Framework.hpp
+        qnd/stateMachine/State.cpp
+        qnd/stateMachine/State.hpp)
+
+#regular application stuff
+add_executable(SDL_stateMachine main.cpp  ${ASSET_OUTPUT_SOURCE} ${QND_SOURCES})
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC
