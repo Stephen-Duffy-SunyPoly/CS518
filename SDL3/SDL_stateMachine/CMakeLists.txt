@@ -48,7 +48,9 @@ set(QND_SOURCES qnd/frameRate.cpp qnd/spriteSheet.cpp qnd/initializer.cpp
         qnd/stateMachine/State.hpp)
 
 #regular application stuff
-add_executable(SDL_stateMachine main.cpp  ${ASSET_OUTPUT_SOURCE} ${QND_SOURCES})
+add_executable(SDL_stateMachine main.cpp  ${ASSET_OUTPUT_SOURCE} ${QND_SOURCES}
+        splashState.cpp
+        splashState.hpp)
 
 if (MSVC)
     # /W4 is the second-highest warning level for MSVC

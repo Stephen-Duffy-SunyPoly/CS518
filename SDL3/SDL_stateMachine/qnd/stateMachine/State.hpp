@@ -14,7 +14,7 @@ namespace qnd::stateMachine {
             virtual void enter(){};
             virtual void leave(){};
             virtual void draw(SDL_Renderer * renderer) = 0;
-            virtual void update(double dt){};
+            virtual void update([[maybe_unused]] double dt){};
             virtual ~State() = default;
     };
 }
