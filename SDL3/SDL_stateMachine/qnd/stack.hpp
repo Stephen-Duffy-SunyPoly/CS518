@@ -59,6 +59,10 @@ namespace qnd {
         ~Stack() {
             delete [] data;
         }
+
+        void clear() {
+            dataSize = 0;
+        }
     };
 }
 #endif //QND_STACK_HPP
