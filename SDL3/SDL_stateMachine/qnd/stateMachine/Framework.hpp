@@ -35,6 +35,7 @@ namespace qnd::stateMachine {
         State * getState(const std::string& name);
         State * getCurrentState();
         void registerState(const std::string& name, State *state);
+        void run();
         ~Framework();
     };
 }
