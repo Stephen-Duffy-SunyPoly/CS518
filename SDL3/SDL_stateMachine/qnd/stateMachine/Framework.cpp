@@ -101,6 +101,7 @@ void qnd::stateMachine::Framework::run() {
         //TODO add frame timeing to FrameRate
         stateStack.peak()->update(1);
         stateStack.peak()->draw(renderer);
+        SDL_RenderPresent(renderer);
         frameRate.delay();
     }
 }

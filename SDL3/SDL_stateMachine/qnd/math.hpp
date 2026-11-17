@@ -8,9 +8,11 @@ SDL_FPoint &operator+=(SDL_FPoint & a, const SDL_FPoint & b);
 
 SDL_FPoint operator-(const SDL_FPoint & a, const SDL_FPoint & b);
 
-SDL_FPoint &operator*=(SDL_FPoint & a, const float b);
+SDL_FPoint &operator*=(SDL_FPoint & a, float b);
 
-SDL_FPoint operator*(const SDL_FPoint & a, const float b);
+SDL_FPoint operator*(const SDL_FPoint & a, float b);
+
+bool operator^(const SDL_FRect& r, const SDL_FPoint& p);
 
 float operator*(const SDL_FPoint &a);
 #endif //QND_MATH_HPP

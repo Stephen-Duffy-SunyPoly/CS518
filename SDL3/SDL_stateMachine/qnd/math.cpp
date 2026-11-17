@@ -33,6 +33,10 @@ SDL_FPoint operator*(const SDL_FPoint & a, const float b) {
     return result;
 }
 
+bool operator^(const SDL_FRect& r, const SDL_FPoint& p) {
+    return p.x >= r.x && p.x <= r.x+r.w && p.y >= r.y && p.y <= r.y+r.h;
+}
+
 float operator*(const SDL_FPoint &a) {
     return a.x*a.x + a.y*a.y;
 }
